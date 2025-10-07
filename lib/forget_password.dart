@@ -59,7 +59,7 @@ class ForgetPasswordPage extends StatelessWidget {
             ),
           ),
 
-          // Parte inferior com formulário
+          // Parte com formulário
           Expanded(
             flex: 2,
             child: Container(

@@ -6,7 +6,7 @@ void main() => runApp(const HomePage());
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
-  static const appTitle = 'Drawer Demo';
+  static const appTitle = 'GreenDrop';
 
   @override
   Widget build(BuildContext context) {
