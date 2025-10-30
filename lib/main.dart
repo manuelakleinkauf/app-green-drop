@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'db/firebase_options.dart';
 import 'view/login_page.dart';
 import 'viewmodel/auth_viewmodel.dart';
+import 'viewmodel/map_viewmodel.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 void main() async {
@@ -22,7 +23,10 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
-      providers: [ChangeNotifierProvider(create: (_) => AuthViewModel())],
+      providers: [
+        ChangeNotifierProvider(create: (_) => AuthViewModel()),
+        ChangeNotifierProvider(create: (_) => MapViewModel()),
+      ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
         title: 'GreenDrop',

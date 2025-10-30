@@ -1,4 +1,5 @@
 import 'package:app/view/news_page.dart';
+import 'package:app/view/map_page.dart';
 import 'package:flutter/material.dart';
 import 'components/nav_bar.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -20,18 +21,17 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  // Lista de páginas para exibir
-  final List<Widget> _pages = [
-    Center(child: Text('Página Inicial')),
-    Center(child: Text('Negócios ou Comunidade')),
-    NewsPage(),
-    Center(child: Text('Perfil')),
-  ];
-
   @override
   Widget build(BuildContext context) {
+    final List<Widget> pages = [
+      const Center(child: Text('Página Inicial')),
+      MapPage(),
+      const NewsPage(),
+      const Center(child: Text('Perfil')),
+    ];
+
     return Scaffold(
-      body: _pages[_selectedIndex],
+      body: pages[_selectedIndex],
       bottomNavigationBar: CustomBottomNavBar(
         selectedIndex: _selectedIndex,
         onTap: _onNavTap,
