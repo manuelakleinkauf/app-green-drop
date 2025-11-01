@@ -1,5 +1,7 @@
 import 'package:app/view/news_page.dart';
 import 'package:app/view/map_page.dart';
+import 'package:app/view/profile_page.dart';
+import 'package:app/view/register_donation_page.dart';
 import 'package:flutter/material.dart';
 import 'components/nav_bar.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -13,7 +15,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   int _selectedIndex = 0;
-  final user = FirebaseAuth.instance.currentUser;
+  final User? user = FirebaseAuth.instance.currentUser;
 
   void _onNavTap(int index) {
     setState(() {
@@ -27,7 +29,10 @@ class _HomePageState extends State<HomePage> {
       const Center(child: Text('Página Inicial')),
       MapPage(),
       const NewsPage(),
-      const Center(child: Text('Perfil')),
+      DonationPage(),
+      user != null
+          ? ProfilePage(uid: user!.uid)
+          : const Center(child: Text('Usuário não logado')),
     ];
 
     return Scaffold(

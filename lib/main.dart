@@ -1,10 +1,13 @@
-import 'package:flutter/material.dart';
+import 'package:app/db/firebase_options.dart';
+import 'package:app/repository/user_repository.dart';
+import 'package:app/viewmodel/auth_viewmodel.dart';
+import 'package:app/viewmodel/donation_view_model.dart';
+import 'package:app/viewmodel/map_viewmodel.dart';
+import 'package:app/viewmodel/profile_viewmodel.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'db/firebase_options.dart';
 import 'view/login_page.dart';
-import 'viewmodel/auth_viewmodel.dart';
-import 'viewmodel/map_viewmodel.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 void main() async {
@@ -12,19 +15,16 @@ void main() async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   final firestore = FirebaseFirestore.instance;
-  print('Firestore instance no main: $firestore');
+  final userRepository = UserRepository(firestore: firestore);
 
-  runApp(const MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MultiProvider(
+  runApp(
+    MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthViewModel()),
+        ChangeNotifierProvider(
+          create: (_) => ProfileViewModel(repository: userRepository),
+        ),
+        ChangeNotifierProvider(create: (_) => DonationViewModel()),
         ChangeNotifierProvider(create: (_) => MapViewModel()),
       ],
       child: MaterialApp(
@@ -33,6 +33,6 @@ class MyApp extends StatelessWidget {
         theme: ThemeData(primarySwatch: Colors.green),
         home: LoginPage(),
       ),
-    );
-  }
+    ),
+  );
 }
