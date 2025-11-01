@@ -67,33 +67,36 @@ class MapPage extends StatelessWidget {
             ),
           ),
           Expanded(
-            child: FlutterMap(
-              options: MapOptions(
-                initialCenter: viewModel.center,
-                initialZoom: 12,
-              ),
-              children: [
-                TileLayer(
-                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                ),
-                MarkerLayer(
-                  markers: viewModel.points
-                      .map(
-                        (p) => Marker(
-                          point: LatLng(p.latitude, p.longitude),
-                          width: 80,
-                          height: 80,
-                          child: const Icon(
-                            Icons.location_pin,
-                            color: Colors.red,
-                            size: 40,
-                          ),
-                        ),
-                      )
-                      .toList(),
-                ),
-              ],
-            ),
+            child: viewModel.points.isEmpty
+                ? const Center(child: CircularProgressIndicator())
+                : FlutterMap(
+                    options: MapOptions(
+                      initialCenter: viewModel.center,
+                      initialZoom: 12,
+                    ),
+                    children: [
+                      TileLayer(
+                        urlTemplate:
+                            'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                      ),
+                      MarkerLayer(
+                        markers: viewModel.points
+                            .map(
+                              (p) => Marker(
+                                point: LatLng(p.latitude, p.longitude),
+                                width: 80,
+                                height: 80,
+                                child: const Icon(
+                                  Icons.location_pin,
+                                  color: Colors.red,
+                                  size: 40,
+                                ),
+                              ),
+                            )
+                            .toList(),
+                      ),
+                    ],
+                  ),
           ),
         ],
       ),

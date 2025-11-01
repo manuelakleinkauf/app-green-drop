@@ -172,7 +172,6 @@ class _RegisterPageState extends State<RegisterPage> {
                       ),
                       const SizedBox(height: 24),
 
-                      // Access profile selection
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
