@@ -4,6 +4,7 @@ import 'package:app/viewmodel/auth_viewmodel.dart';
 import 'package:app/viewmodel/donation_view_model.dart';
 import 'package:app/viewmodel/map_viewmodel.dart';
 import 'package:app/viewmodel/profile_viewmodel.dart';
+import 'package:app/viewmodel/reward_viewmodel.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -26,6 +27,7 @@ void main() async {
         ),
         ChangeNotifierProvider(create: (_) => DonationViewModel()),
         ChangeNotifierProvider(create: (_) => MapViewModel()),
+        ChangeNotifierProvider(create: (_) => RewardViewModel()),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,

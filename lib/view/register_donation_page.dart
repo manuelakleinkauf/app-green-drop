@@ -16,18 +16,34 @@ class _DonationPageState extends State<DonationPage> {
 
   void registerDonation() async {
     if (_formKey.currentState!.validate()) {
-      final email = emailController.text.trim();
-      final items = int.tryParse(itemsController.text.trim()) ?? 0;
+      try {
+        final email = emailController.text.trim();
+        final items = int.tryParse(itemsController.text.trim()) ?? 0;
 
-      final donationVM = Provider.of<DonationViewModel>(context, listen: false);
+        final donationVM = Provider.of<DonationViewModel>(context, listen: false);
 
-      await donationVM.registerDonation(email, items);
+        await donationVM.registerDonation(email, items);
 
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Doação registrada com sucesso!')));
+        if (!mounted) return;
 
-      _formKey.currentState!.reset();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Doação registrada com sucesso!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+
+        _formKey.currentState!.reset();
+      } catch (e) {
+        if (!mounted) return;
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erro ao registrar doação: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
