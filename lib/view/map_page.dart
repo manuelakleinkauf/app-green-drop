@@ -52,7 +52,13 @@ class MapPage extends StatelessWidget {
                     String fullAddress =
                         "${streetController.text}, ${numberController.text}, ${neighborhoodController.text}, ${cityController.text}";
 
-                    await viewModel.addPoint(nameController.text, fullAddress);
+                    await viewModel.addPoint(
+                      nameController.text,
+                      fullAddress,
+                      '', // description
+                      ['Eletrônicos'], // accepted items
+                      'voluntário', // created by
+                    );
 
                     // Limpa os campos após adicionar
                     nameController.clear();

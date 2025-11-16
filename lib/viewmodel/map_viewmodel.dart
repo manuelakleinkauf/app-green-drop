@@ -11,6 +11,7 @@ class MapViewModel extends ChangeNotifier {
 
   final List<CollectionPoint> _points = [];
   List<CollectionPoint> get points => _points;
+  bool isLoading = false;
 
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
@@ -26,21 +27,8 @@ class MapViewModel extends ChangeNotifier {
 
       for (var doc in snapshot.docs) {
         final data = doc.data();
-
-        final lat = double.tryParse(data['latitude'].toString());
-        final lon = double.tryParse(data['longitude'].toString());
-
-        if (lat != null && lon != null) {
-          _points.add(
-            CollectionPoint(
-              id: doc.id,
-              name: data['name'] ?? 'Sem nome',
-              address: data['address'] ?? 'Sem endereço',
-              latitude: lat,
-              longitude: lon,
-            ),
-          );
-        }
+        final point = CollectionPoint.fromMap(data, doc.id);
+        _points.add(point);
       }
 
       if (_points.isNotEmpty) {
@@ -51,38 +39,94 @@ class MapViewModel extends ChangeNotifier {
     });
   }
 
-  Future<void> addPoint(String name, String fullAddress) async {
-    final url = Uri.parse(
-      'https://nominatim.openstreetmap.org/search?q=$fullAddress&format=json&limit=1',
-    );
+  Future<void> addPoint(
+    String name,
+    String address,
+    String description,
+    List<String> acceptedItems,
+    String createdBy,
+  ) async {
+    isLoading = true;
+    notifyListeners();
 
-    final response = await http.get(
-      url,
-      headers: {'User-Agent': 'flutter_app'},
-    );
+    try {
+      final url = Uri.parse(
+        'https://nominatim.openstreetmap.org/search?q=$address&format=json&limit=1',
+      );
 
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-      if (data.isNotEmpty) {
-        final lat = double.parse(data[0]['lat']);
-        final lon = double.parse(data[0]['lon']);
+      final response = await http.get(
+        url,
+        headers: {'User-Agent': 'flutter_app'},
+      );
 
-        final point = CollectionPoint(
-          id: '',
-          name: name,
-          address: fullAddress,
-          latitude: lat,
-          longitude: lon,
-        );
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data.isNotEmpty) {
+          final lat = double.parse(data[0]['lat']);
+          final lon = double.parse(data[0]['lon']);
 
-        await _firestore.collection('collection_points').add(point.toMap());
+          final point = CollectionPoint(
+            id: '',
+            name: name,
+            address: address,
+            latitude: lat,
+            longitude: lon,
+            description: description,
+            acceptedItems: acceptedItems,
+            createdBy: createdBy,
+            createdAt: DateTime.now(),
+          );
 
-        print("Ponto salvo no Firebase: $name ($lat, $lon)");
+          await _firestore.collection('collection_points').add(point.toMap());
+          print("Ponto salvo no Firebase: $name ($lat, $lon)");
+        } else {
+          throw Exception('Endereço não encontrado');
+        }
       } else {
-        print(" Nenhum resultado encontrado para o endereço.");
+        throw Exception('Erro ao geocodificar endereço');
       }
-    } else {
-      print("Erro na API do Nominatim: ${response.statusCode}");
+    } catch (e) {
+      print("Erro ao adicionar ponto: $e");
+      rethrow;
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> updatePoint(CollectionPoint point) async {
+    isLoading = true;
+    notifyListeners();
+
+    try {
+      await _firestore
+          .collection('collection_points')
+          .doc(point.id)
+          .update(point.toMap());
+    } catch (e) {
+      print("Erro ao atualizar ponto: $e");
+      rethrow;
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> togglePointStatus(String pointId, bool isActive) async {
+    isLoading = true;
+    notifyListeners();
+
+    try {
+      await _firestore
+          .collection('collection_points')
+          .doc(pointId)
+          .update({'isActive': isActive});
+    } catch (e) {
+      print("Erro ao alterar status do ponto: $e");
+      rethrow;
+    } finally {
+      isLoading = false;
+      notifyListeners();
     }
   }
 }
