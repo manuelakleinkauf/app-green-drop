@@ -4,11 +4,13 @@ import '../model/reward.dart';
 
 class RewardViewModel extends ChangeNotifier {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
   List<Reward> _rewards = [];
   bool isLoading = false;
 
   List<Reward> get rewards => _rewards;
-  List<Reward> get availableRewards => _rewards.where((r) => r.isAvailable && r.hasAvailableQuantity).toList();
+  List<Reward> get availableRewards =>
+      _rewards.where((r) => r.isAvailable && r.quantity > 0).toList();
 
   RewardViewModel() {
     _listenToRewards();
@@ -16,9 +18,10 @@ class RewardViewModel extends ChangeNotifier {
 
   void _listenToRewards() {
     _firestore.collection('rewards').snapshots().listen((snapshot) {
-      _rewards = snapshot.docs
-          .map((doc) => Reward.fromFirestore(doc))
-          .toList();
+      _rewards = snapshot.docs.map((doc) {
+        return Reward.fromFirestore(doc);
+      }).toList();
+
       notifyListeners();
     });
   }
@@ -30,12 +33,12 @@ class RewardViewModel extends ChangeNotifier {
     int quantity,
     String? imageUrl,
   ) async {
-    isLoading = true;
-    notifyListeners();
-
     try {
+      isLoading = true;
+      notifyListeners();
+
       final reward = Reward(
-        id: '',
+        id: "",
         title: title,
         description: description,
         pointsCost: pointsCost,
@@ -43,30 +46,10 @@ class RewardViewModel extends ChangeNotifier {
         imageUrl: imageUrl,
         createdAt: DateTime.now(),
         claimedBy: [],
+        isAvailable: true,
       );
 
       await _firestore.collection('rewards').add(reward.toMap());
-    } catch (e) {
-      print('Erro ao adicionar recompensa: $e');
-      rethrow;
-    } finally {
-      isLoading = false;
-      notifyListeners();
-    }
-  }
-
-  Future<void> updateReward(Reward reward) async {
-    isLoading = true;
-    notifyListeners();
-
-    try {
-      await _firestore
-          .collection('rewards')
-          .doc(reward.id)
-          .update(reward.toMap());
-    } catch (e) {
-      print('Erro ao atualizar recompensa: $e');
-      rethrow;
     } finally {
       isLoading = false;
       notifyListeners();
@@ -74,18 +57,14 @@ class RewardViewModel extends ChangeNotifier {
   }
 
   Future<void> claimReward(String rewardId, String userId) async {
-    isLoading = true;
-    notifyListeners();
-
     try {
-      final reward = _rewards.firstWhere((r) => r.id == rewardId);
-      
-      if (!reward.hasAvailableQuantity) {
-        throw Exception('Recompensa esgotada');
-      }
+      isLoading = true;
+      notifyListeners();
 
-      if (reward.claimedBy.contains(userId)) {
-        throw Exception('Você já resgatou esta recompensa');
+      final reward = _rewards.firstWhere((r) => r.id == rewardId);
+
+      if (reward.quantity <= 0) {
+        throw Exception('Recompensa esgotada');
       }
 
       final userDoc = await _firestore.collection('users').doc(userId).get();
@@ -95,22 +74,41 @@ class RewardViewModel extends ChangeNotifier {
         throw Exception('Pontos insuficientes');
       }
 
-      // Atualiza a recompensa
       await _firestore.collection('rewards').doc(rewardId).update({
-        'claimedBy': FieldValue.arrayUnion([userId]),
+        'quantity': reward.quantity - 1,
       });
 
-      // Deduz os pontos do usuário
-      await _firestore.collection('users').doc(userId).update({
-        'points': FieldValue.increment(-reward.pointsCost),
-      });
+      await _firestore
+          .collection('users')
+          .doc(userId)
+          .update({'points': FieldValue.increment(-reward.pointsCost)});
 
-    } catch (e) {
-      print('Erro ao resgatar recompensa: $e');
-      rethrow;
+      await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('rewardHistory')
+          .add({
+        'rewardId': rewardId,
+        'title': reward.title,
+        'imageUrl': reward.imageUrl,
+        'pointsSpent': reward.pointsCost,
+        'claimedAt': Timestamp.now(),
+      });
     } finally {
       isLoading = false;
       notifyListeners();
     }
+  }
+
+  Stream<List<Map<String, dynamic>>> rewardHistory(String userId) {
+    return _firestore
+        .collection('users')
+        .doc(userId)
+        .collection('rewardHistory')
+        .orderBy('claimedAt', descending: true)
+        .snapshots()
+        .map((snap) => snap.docs
+            .map((doc) => doc.data() as Map<String, dynamic>)
+            .toList());
   }
 }

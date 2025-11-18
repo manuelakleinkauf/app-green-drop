@@ -176,7 +176,7 @@ class _RegisterPageState extends State<RegisterPage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const Text(
-                            'Access Profile',
+                            'Perfil de Acesso',
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,

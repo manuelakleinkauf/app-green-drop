@@ -5,36 +5,61 @@ class Reward {
   final String title;
   final String description;
   final int pointsCost;
-  final bool isAvailable;
+  final int quantity;
   final String? imageUrl;
   final DateTime createdAt;
-  final int quantity;
   final List<String> claimedBy;
+  final bool isAvailable;
 
   Reward({
     required this.id,
     required this.title,
     required this.description,
     required this.pointsCost,
-    this.isAvailable = true,
-    this.imageUrl,
-    required this.createdAt,
     required this.quantity,
+    required this.imageUrl,
+    required this.createdAt,
     required this.claimedBy,
+    required this.isAvailable,
   });
 
   factory Reward.fromFirestore(DocumentSnapshot doc) {
-    Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+    final data = doc.data() as Map<String, dynamic>;
+
     return Reward(
       id: doc.id,
-      title: data['title'] ?? '',
-      description: data['description'] ?? '',
-      pointsCost: data['pointsCost'] ?? 0,
-      isAvailable: data['isAvailable'] ?? true,
+      title: data['title'],
+      description: data['description'],
+      pointsCost: data['pointsCost'],
+      quantity: data['quantity'],
       imageUrl: data['imageUrl'],
       createdAt: (data['createdAt'] as Timestamp).toDate(),
-      quantity: data['quantity'] ?? 0,
       claimedBy: List<String>.from(data['claimedBy'] ?? []),
+      isAvailable: data['isAvailable'] ?? true,
+    );
+  }
+
+  Reward copyWith({
+    String? id,
+    String? title,
+    String? description,
+    int? pointsCost,
+    int? quantity,
+    String? imageUrl,
+    DateTime? createdAt,
+    List<String>? claimedBy,
+    bool? isAvailable,
+  }) {
+    return Reward(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      description: description ?? this.description,
+      pointsCost: pointsCost ?? this.pointsCost,
+      quantity: quantity ?? this.quantity,
+      imageUrl: imageUrl ?? this.imageUrl,
+      createdAt: createdAt ?? this.createdAt,
+      claimedBy: claimedBy ?? this.claimedBy,
+      isAvailable: isAvailable ?? this.isAvailable,
     );
   }
 
@@ -43,35 +68,11 @@ class Reward {
       'title': title,
       'description': description,
       'pointsCost': pointsCost,
-      'isAvailable': isAvailable,
-      'imageUrl': imageUrl,
-      'createdAt': Timestamp.fromDate(createdAt),
       'quantity': quantity,
+      'imageUrl': imageUrl,
+      'createdAt': createdAt,
       'claimedBy': claimedBy,
+      'isAvailable': isAvailable,
     };
-  }
-
-  bool get hasAvailableQuantity => quantity > claimedBy.length;
-
-  Reward copyWith({
-    String? title,
-    String? description,
-    int? pointsCost,
-    bool? isAvailable,
-    String? imageUrl,
-    int? quantity,
-    List<String>? claimedBy,
-  }) {
-    return Reward(
-      id: id,
-      title: title ?? this.title,
-      description: description ?? this.description,
-      pointsCost: pointsCost ?? this.pointsCost,
-      isAvailable: isAvailable ?? this.isAvailable,
-      imageUrl: imageUrl ?? this.imageUrl,
-      createdAt: createdAt,
-      quantity: quantity ?? this.quantity,
-      claimedBy: claimedBy ?? this.claimedBy,
-    );
   }
 }

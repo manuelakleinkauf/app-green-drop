@@ -65,16 +65,18 @@ class _ProfilePageState extends State<ProfilePage> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      if (user.accessProfile == 'Voluntário')
+                      if (user.accessProfile == 'volunteer')
                         Expanded(
                           child: Padding(
-                            padding: const EdgeInsets.only(bottom: 16, right: 8),
+                            padding:
+                                const EdgeInsets.only(bottom: 16, right: 8),
                             child: ElevatedButton.icon(
                               onPressed: () {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) => const CollectionPointManagementPage(),
+                                    builder: (context) =>
+                                        const CollectionPointManagementPage(),
                                   ),
                                 );
                               },
@@ -95,7 +97,10 @@ class _ProfilePageState extends State<ProfilePage> {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => RewardsPage(userId: user.uid),
+                                  builder: (context) => RewardsPage(
+                                    userId: user.uid,
+                                    accessProfile: user.accessProfile,
+                                  ),
                                 ),
                               );
                             },
