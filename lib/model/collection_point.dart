@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class CollectionPoint {
   final String id;
   final String name;
@@ -32,7 +34,9 @@ class CollectionPoint {
       longitude: map['longitude'] ?? 0.0,
       isActive: map['isActive'] ?? true,
       createdBy: map['createdBy'] ?? '',
-      createdAt: (map['createdAt'] as DateTime?) ?? DateTime.now(),
+      createdAt: map['createdAt'] is Timestamp 
+          ? (map['createdAt'] as Timestamp).toDate() 
+          : (map['createdAt'] as DateTime? ?? DateTime.now()),
       description: map['description'],
       acceptedItems: List<String>.from(map['acceptedItems'] ?? []),
     );
