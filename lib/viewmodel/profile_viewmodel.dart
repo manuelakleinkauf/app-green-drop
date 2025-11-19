@@ -43,9 +43,8 @@ class ProfileViewModel extends ChangeNotifier {
           .orderBy('points', descending: true)
           .get();
 
-      final index = usersSnapshot.docs
-          .indexWhere((doc) => doc.id == uid);
-      
+      final index = usersSnapshot.docs.indexWhere((doc) => doc.id == uid);
+
       if (index != -1) {
         userRanking = index + 1;
       }
@@ -59,7 +58,6 @@ class ProfileViewModel extends ChangeNotifier {
       final activitiesSnapshot = await _firestore
           .collection('activities')
           .where('userId', isEqualTo: uid)
-          .orderBy('timestamp', descending: true)
           .limit(10)
           .get();
 
