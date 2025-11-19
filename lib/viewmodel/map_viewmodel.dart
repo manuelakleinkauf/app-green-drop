@@ -50,14 +50,16 @@ class MapViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final url = Uri.parse(
-        'https://nominatim.openstreetmap.org/search?q=$address&format=json&limit=1',
-      );
+      // Usa proxy CORS para evitar bloqueio no navegador
+      final encodedAddress = Uri.encodeComponent(address);
+      
+      // Proxy CORS público - funciona no navegador
+      final corsProxy = 'https://corsproxy.io/?';
+      final nominatimUrl = 'https://nominatim.openstreetmap.org/search?q=$encodedAddress&format=json&limit=1';
+      
+      final url = Uri.parse('$corsProxy${Uri.encodeComponent(nominatimUrl)}');
 
-      final response = await http.get(
-        url,
-        headers: {'User-Agent': 'flutter_app'},
-      );
+      final response = await http.get(url);
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);

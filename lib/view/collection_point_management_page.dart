@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../model/collection_point.dart';
 import '../viewmodel/map_viewmodel.dart';
+import 'components/collection_point_form.dart';
 
 class CollectionPointManagementPage extends StatefulWidget {
   const CollectionPointManagementPage({super.key});
@@ -13,19 +14,34 @@ class CollectionPointManagementPage extends StatefulWidget {
 class _CollectionPointManagementPageState extends State<CollectionPointManagementPage> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
-  final _addressController = TextEditingController();
+  final _streetController = TextEditingController();
+  final _numberController = TextEditingController();
+  final _neighborhoodController = TextEditingController();
+  final _cityController = TextEditingController();
   final _descriptionController = TextEditingController();
   final List<String> _selectedItems = [];
 
-  final List<String> _availableItems = [
-    'Eletrônicos',
-    'Baterias',
-    'Pilhas',
-    'Celulares',
-    'Computadores',
-    'Impressoras',
-    'Outros',
-  ];
+  String getFullAddress() {
+    return "${_streetController.text}, ${_numberController.text}, ${_neighborhoodController.text}, ${_cityController.text}";
+  }
+
+  void _parseAddress(String address) {
+    // Tenta separar o endereço nas suas partes
+    final parts = address.split(',').map((e) => e.trim()).toList();
+    
+    if (parts.length >= 4) {
+      _streetController.text = parts[0];
+      _numberController.text = parts[1];
+      _neighborhoodController.text = parts[2];
+      _cityController.text = parts.sublist(3).join(', ');
+    } else {
+      // Se não conseguir separar, coloca tudo na rua
+      _streetController.text = address;
+      _numberController.text = '';
+      _neighborhoodController.text = '';
+      _cityController.text = '';
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -102,56 +118,18 @@ class _CollectionPointManagementPageState extends State<CollectionPointManagemen
       builder: (context) => AlertDialog(
         title: const Text('Adicionar Ponto de Coleta'),
         content: SingleChildScrollView(
-          child: Form(
-            key: _formKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextFormField(
-                  controller: _nameController,
-                  decoration: const InputDecoration(labelText: 'Nome'),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Por favor, insira um nome';
-                    }
-                    return null;
-                  },
-                ),
-                TextFormField(
-                  controller: _addressController,
-                  decoration: const InputDecoration(labelText: 'Endereço'),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Por favor, insira um endereço';
-                    }
-                    return null;
-                  },
-                ),
-                TextFormField(
-                  controller: _descriptionController,
-                  decoration: const InputDecoration(labelText: 'Descrição'),
-                  maxLines: 3,
-                ),
-                const SizedBox(height: 16),
-                const Text('Itens aceitos:'),
-                Wrap(
-                  spacing: 8,
-                  children: _availableItems.map((item) => FilterChip(
-                    label: Text(item),
-                    selected: _selectedItems.contains(item),
-                    onSelected: (selected) {
-                      setState(() {
-                        if (selected) {
-                          _selectedItems.add(item);
-                        } else {
-                          _selectedItems.remove(item);
-                        }
-                      });
-                    },
-                  )).toList(),
-                ),
-              ],
-            ),
+          child: CollectionPointForm(
+            formKey: _formKey,
+            nameController: _nameController,
+            streetController: _streetController,
+            numberController: _numberController,
+            neighborhoodController: _neighborhoodController,
+            cityController: _cityController,
+            descriptionController: _descriptionController,
+            selectedItems: _selectedItems,
+            onSelectedItemsChanged: () {
+              setState(() {});
+            },
           ),
         ),
         actions: [
@@ -161,8 +139,12 @@ class _CollectionPointManagementPageState extends State<CollectionPointManagemen
           ),
           ElevatedButton(
             onPressed: () {
-              if (_formKey.currentState!.validate()) {
+              if (_formKey.currentState!.validate() && _selectedItems.isNotEmpty) {
                 _addCollectionPoint(context);
+              } else if (_selectedItems.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Selecione pelo menos um item aceito')),
+                );
               }
             },
             style: ElevatedButton.styleFrom(
@@ -177,7 +159,7 @@ class _CollectionPointManagementPageState extends State<CollectionPointManagemen
 
   Future<void> _showEditDialog(BuildContext context, MapViewModel viewModel, CollectionPoint point) async {
     _nameController.text = point.name;
-    _addressController.text = point.address;
+    _parseAddress(point.address);
     _descriptionController.text = point.description ?? '';
     _selectedItems
       ..clear()
@@ -188,56 +170,18 @@ class _CollectionPointManagementPageState extends State<CollectionPointManagemen
       builder: (context) => AlertDialog(
         title: const Text('Editar Ponto de Coleta'),
         content: SingleChildScrollView(
-          child: Form(
-            key: _formKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextFormField(
-                  controller: _nameController,
-                  decoration: const InputDecoration(labelText: 'Nome'),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Por favor, insira um nome';
-                    }
-                    return null;
-                  },
-                ),
-                TextFormField(
-                  controller: _addressController,
-                  decoration: const InputDecoration(labelText: 'Endereço'),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Por favor, insira um endereço';
-                    }
-                    return null;
-                  },
-                ),
-                TextFormField(
-                  controller: _descriptionController,
-                  decoration: const InputDecoration(labelText: 'Descrição'),
-                  maxLines: 3,
-                ),
-                const SizedBox(height: 16),
-                const Text('Itens aceitos:'),
-                Wrap(
-                  spacing: 8,
-                  children: _availableItems.map((item) => FilterChip(
-                    label: Text(item),
-                    selected: _selectedItems.contains(item),
-                    onSelected: (selected) {
-                      setState(() {
-                        if (selected) {
-                          _selectedItems.add(item);
-                        } else {
-                          _selectedItems.remove(item);
-                        }
-                      });
-                    },
-                  )).toList(),
-                ),
-              ],
-            ),
+          child: CollectionPointForm(
+            formKey: _formKey,
+            nameController: _nameController,
+            streetController: _streetController,
+            numberController: _numberController,
+            neighborhoodController: _neighborhoodController,
+            cityController: _cityController,
+            descriptionController: _descriptionController,
+            selectedItems: _selectedItems,
+            onSelectedItemsChanged: () {
+              setState(() {});
+            },
           ),
         ),
         actions: [
@@ -247,8 +191,12 @@ class _CollectionPointManagementPageState extends State<CollectionPointManagemen
           ),
           ElevatedButton(
             onPressed: () {
-              if (_formKey.currentState!.validate()) {
+              if (_formKey.currentState!.validate() && _selectedItems.isNotEmpty) {
                 _updateCollectionPoint(context, viewModel, point);
+              } else if (_selectedItems.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Selecione pelo menos um item aceito')),
+                );
               }
             },
             style: ElevatedButton.styleFrom(
@@ -267,7 +215,7 @@ class _CollectionPointManagementPageState extends State<CollectionPointManagemen
     try {
       await viewModel.addPoint(
         _nameController.text,
-        _addressController.text,
+        getFullAddress(),
         _descriptionController.text,
         List<String>.from(_selectedItems),
         'current_user_id', // TODO: Pegar o ID do usuário logado
@@ -288,7 +236,7 @@ class _CollectionPointManagementPageState extends State<CollectionPointManagemen
     try {
       final updatedPoint = point.copyWith(
         name: _nameController.text,
-        address: _addressController.text,
+        address: getFullAddress(),
         description: _descriptionController.text,
         acceptedItems: List<String>.from(_selectedItems),
       );
@@ -327,7 +275,10 @@ class _CollectionPointManagementPageState extends State<CollectionPointManagemen
 
   void _clearForm() {
     _nameController.clear();
-    _addressController.clear();
+    _streetController.clear();
+    _numberController.clear();
+    _neighborhoodController.clear();
+    _cityController.clear();
     _descriptionController.clear();
     _selectedItems.clear();
   }
@@ -335,7 +286,10 @@ class _CollectionPointManagementPageState extends State<CollectionPointManagemen
   @override
   void dispose() {
     _nameController.dispose();
-    _addressController.dispose();
+    _streetController.dispose();
+    _numberController.dispose();
+    _neighborhoodController.dispose();
+    _cityController.dispose();
     _descriptionController.dispose();
     super.dispose();
   }
