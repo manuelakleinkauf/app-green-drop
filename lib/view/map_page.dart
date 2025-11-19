@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../viewmodel/map_viewmodel.dart';
+import '../viewmodel/current_user_provider.dart';
 import 'components/collection_point_form.dart';
 
 class MapPage extends StatefulWidget {
@@ -50,6 +52,7 @@ class _MapPageState extends State<MapPage> {
   @override
   Widget build(BuildContext context) {
     final viewModel = Provider.of<MapViewModel>(context);
+    final userProvider = Provider.of<CurrentUserProvider>(context);
 
     return Scaffold(
       appBar: AppBar(
@@ -92,11 +95,13 @@ class _MapPageState extends State<MapPage> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showAddPointDialog(context, viewModel),
-        backgroundColor: const Color(0xFF00897B),
-        child: const Icon(Icons.add),
-      ),
+      floatingActionButton: userProvider.canCreateCollectionPoint
+          ? FloatingActionButton(
+              onPressed: () => _showAddPointDialog(context, viewModel),
+              backgroundColor: const Color(0xFF00897B),
+              child: const Icon(Icons.add),
+            )
+          : null,
     );
   }
 
@@ -131,12 +136,14 @@ class _MapPageState extends State<MapPage> {
             onPressed: () async {
               if (_formKey.currentState!.validate() && selectedItems.isNotEmpty) {
                 try {
+                  final currentUserId = FirebaseAuth.instance.currentUser?.uid ?? 'unknown';
+                  
                   await viewModel.addPoint(
                     nameController.text,
                     getFullAddress(),
                     descriptionController.text,
                     List<String>.from(selectedItems),
-                    'voluntário',
+                    currentUserId,
                   );
                   
                   Navigator.pop(context);

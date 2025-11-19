@@ -105,10 +105,20 @@ class RewardViewModel extends ChangeNotifier {
         .collection('users')
         .doc(userId)
         .collection('rewardHistory')
-        .orderBy('claimedAt', descending: true)
         .snapshots()
-        .map((snap) => snap.docs
-            .map((doc) => doc.data() as Map<String, dynamic>)
-            .toList());
+        .map((snap) {
+          final rewards = snap.docs
+              .map((doc) => doc.data())
+              .toList();
+          
+          // Ordenar em memória por claimedAt (mais recente primeiro)
+          rewards.sort((a, b) {
+            final aTime = (a['claimedAt'] as Timestamp?)?.toDate() ?? DateTime(1970);
+            final bTime = (b['claimedAt'] as Timestamp?)?.toDate() ?? DateTime(1970);
+            return bTime.compareTo(aTime);
+          });
+          
+          return rewards;
+        });
   }
 }

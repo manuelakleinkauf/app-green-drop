@@ -1,6 +1,7 @@
 import 'package:app/db/firebase_options.dart';
 import 'package:app/repository/user_repository.dart';
 import 'package:app/viewmodel/auth_viewmodel.dart';
+import 'package:app/viewmodel/current_user_provider.dart';
 import 'package:app/viewmodel/donation_view_model.dart';
 import 'package:app/viewmodel/map_viewmodel.dart';
 import 'package:app/viewmodel/profile_viewmodel.dart';
@@ -22,6 +23,7 @@ void main() async {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthViewModel()),
+        ChangeNotifierProvider(create: (_) => CurrentUserProvider()),
         ChangeNotifierProvider(
           create: (_) => ProfileViewModel(repository: userRepository),
         ),

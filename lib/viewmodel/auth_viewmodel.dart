@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../repository/auth_repository.dart';
+import '../model/user_role.dart';
 
 class AuthViewModel extends ChangeNotifier {
   late final AuthRepository _repository;
@@ -43,9 +44,10 @@ class AuthViewModel extends ChangeNotifier {
     String email,
     String password,
     String name,
-    String accessProfile,
-    BuildContext context,
-  ) async {
+    String? accessProfile,
+    BuildContext context, {
+    UserRole? role,
+  }) async {
     try {
       isLoading = true;
       notifyListeners();
@@ -55,6 +57,7 @@ class AuthViewModel extends ChangeNotifier {
         password: password,
         name: name,
         accessProfile: accessProfile,
+        role: role,
       );
 
       ScaffoldMessenger.of(context).showSnackBar(

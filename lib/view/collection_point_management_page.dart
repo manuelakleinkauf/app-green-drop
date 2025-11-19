@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../model/collection_point.dart';
 import '../viewmodel/map_viewmodel.dart';
+import '../viewmodel/current_user_provider.dart';
 import 'components/collection_point_form.dart';
+import 'confirm_donations_page.dart';
 
 class CollectionPointManagementPage extends StatefulWidget {
   const CollectionPointManagementPage({super.key});
@@ -45,6 +48,47 @@ class _CollectionPointManagementPageState extends State<CollectionPointManagemen
 
   @override
   Widget build(BuildContext context) {
+    final userProvider = Provider.of<CurrentUserProvider>(context);
+    
+    // Debug: Imprimir informações do usuário
+    print("=== DEBUG COLLECTION POINT MANAGEMENT ===");
+    print("User UID: ${userProvider.currentUser?.uid}");
+    print("User Role: ${userProvider.currentUser?.role}");
+    print("Can view management: ${userProvider.canViewCollectionPointManagement}");
+
+    // Verifica se o usuário tem permissão para acessar esta página
+    if (!userProvider.canViewCollectionPointManagement) {
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('Acesso Negado'),
+          backgroundColor: const Color(0xFF00897B),
+        ),
+        body: const Center(
+          child: Padding(
+            padding: EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.lock, size: 64, color: Colors.grey),
+                SizedBox(height: 16),
+                Text(
+                  'Você não tem permissão para acessar esta página.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 18),
+                ),
+                SizedBox(height: 8),
+                Text(
+                  'Apenas Voluntários e Administradores podem gerenciar pontos de coleta.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.grey),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Gestão de Pontos de Coleta'),
@@ -60,15 +104,31 @@ class _CollectionPointManagementPageState extends State<CollectionPointManagemen
             itemCount: viewModel.points.length,
             itemBuilder: (context, index) {
               final point = viewModel.points[index];
+              final canEdit = userProvider.canEditCollectionPoint(point.createdBy);
+              
+              // Debug: Imprimir informações do ponto
+              print("Ponto ${index + 1}: ${point.name}");
+              print("  - ID: ${point.id}");
+              print("  - CreatedBy: ${point.createdBy}");
+              print("  - Can Edit: $canEdit");
+              
               return Card(
                 margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: ExpansionTile(
                   title: Text(point.name),
                   subtitle: Text(point.address),
-                  trailing: Switch(
-                    value: point.isActive,
-                    onChanged: (value) => _togglePointStatus(viewModel, point),
-                  ),
+                  trailing: canEdit
+                      ? Switch(
+                          value: point.isActive,
+                          onChanged: (value) => _togglePointStatus(viewModel, point),
+                        )
+                      : Chip(
+                          label: Text(
+                            point.isActive ? 'Ativo' : 'Inativo',
+                            style: const TextStyle(fontSize: 12),
+                          ),
+                          backgroundColor: point.isActive ? Colors.green[100] : Colors.red[100],
+                        ),
                   children: [
                     Padding(
                       padding: const EdgeInsets.all(16),
@@ -85,13 +145,62 @@ class _CollectionPointManagementPageState extends State<CollectionPointManagemen
                             )).toList(),
                           ),
                           const SizedBox(height: 16),
-                          ElevatedButton(
-                            onPressed: () => _showEditDialog(context, viewModel, point),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF00897B),
+                          if (canEdit)
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                ElevatedButton.icon(
+                                  onPressed: () => _showEditDialog(context, viewModel, point),
+                                  icon: const Icon(Icons.edit),
+                                  label: const Text('Editar Ponto'),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFF00897B),
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                StreamBuilder<QuerySnapshot>(
+                                  stream: FirebaseFirestore.instance
+                                      .collection('activities')
+                                      .where('collectionPointId', isEqualTo: point.id)
+                                      .where('status', isEqualTo: 'pending')
+                                      .snapshots(),
+                                  builder: (context, snapshot) {
+                                    final pendingCount = snapshot.data?.docs.length ?? 0;
+                                    
+                                    return ElevatedButton.icon(
+                                      onPressed: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) => ConfirmDonationsPage(
+                                              collectionPointId: point.id,
+                                              collectionPointName: point.name,
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                      icon: Badge(
+                                        label: Text('$pendingCount'),
+                                        isLabelVisible: pendingCount > 0,
+                                        child: const Icon(Icons.check_circle_outline),
+                                      ),
+                                      label: Text('Confirmar Doações${pendingCount > 0 ? ' ($pendingCount)' : ''}'),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: pendingCount > 0 ? Colors.orange : Colors.grey,
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ],
+                            )
+                          else
+                            const Text(
+                              'Você não pode editar este ponto',
+                              style: TextStyle(
+                                color: Colors.grey,
+                                fontStyle: FontStyle.italic,
+                              ),
                             ),
-                            child: const Text('Editar Ponto'),
-                          ),
                         ],
                       ),
                     ),
@@ -211,6 +320,7 @@ class _CollectionPointManagementPageState extends State<CollectionPointManagemen
 
   Future<void> _addCollectionPoint(BuildContext context) async {
     final viewModel = Provider.of<MapViewModel>(context, listen: false);
+    final userProvider = Provider.of<CurrentUserProvider>(context, listen: false);
     
     try {
       await viewModel.addPoint(
@@ -218,7 +328,7 @@ class _CollectionPointManagementPageState extends State<CollectionPointManagemen
         getFullAddress(),
         _descriptionController.text,
         List<String>.from(_selectedItems),
-        'current_user_id', // TODO: Pegar o ID do usuário logado
+        userProvider.currentUser!.uid,
       );
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(

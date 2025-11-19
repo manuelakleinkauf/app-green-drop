@@ -1,8 +1,12 @@
 import 'package:app/model/user.dart';
+import 'package:app/model/collection_point.dart';
+import 'package:app/model/activity.dart';
 import 'package:app/viewmodel/donation_view_model.dart';
+import 'package:app/viewmodel/map_viewmodel.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'components/item_quantity_selector.dart';
 
 class DonationPage extends StatefulWidget {
   final UserModel user;
@@ -15,113 +19,307 @@ class DonationPage extends StatefulWidget {
 
 class _DonationPageState extends State<DonationPage> {
   final _formKey = GlobalKey<FormState>();
-  final TextEditingController emailController = TextEditingController();
-  final TextEditingController itemsController = TextEditingController();
+  CollectionPoint? _selectedPoint;
+  final Map<String, int> _selectedItems = {};
+  bool _isSubmitting = false;
 
   void registerDonation() async {
     if (_formKey.currentState!.validate()) {
+      if (_selectedPoint == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Por favor, selecione um ponto de coleta'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+        return;
+      }
+
+      if (_selectedItems.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Por favor, adicione pelo menos um item'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+        return;
+      }
+
+      // Validar se o ponto aceita os itens selecionados
+      final invalidItems = _selectedItems.keys
+          .where((item) => !_selectedPoint!.acceptedItems.contains(item))
+          .toList();
+
+      if (invalidItems.isNotEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Este ponto não aceita: ${invalidItems.join(', ')}',
+            ),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+
+      setState(() => _isSubmitting = true);
+
       try {
-        final email = emailController.text.trim();
-        final items = int.tryParse(itemsController.text.trim()) ?? 0;
+        final donationVM = Provider.of<DonationViewModel>(context, listen: false);
 
-        final donationVM =
-            Provider.of<DonationViewModel>(context, listen: false);
-
-        await donationVM.registerDonation(email, items);
+        await donationVM.registerDonation(
+          userId: widget.user.uid,
+          collectionPointId: _selectedPoint!.id,
+          collectionPointName: _selectedPoint!.name,
+          itemDetails: _selectedItems,
+        );
 
         if (!mounted) return;
 
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Doacao registrada com sucesso!'),
+            content: Text('Doação registrada com sucesso!'),
             backgroundColor: Colors.green,
           ),
         );
 
+        // Limpar formulário
+        setState(() {
+          _selectedPoint = null;
+          _selectedItems.clear();
+        });
         _formKey.currentState!.reset();
       } catch (e) {
         if (!mounted) return;
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Erro ao registrar doacao: ${e.toString()}'),
+            content: Text('Erro ao registrar doação: ${e.toString()}'),
             backgroundColor: Colors.red,
           ),
         );
+      } finally {
+        if (mounted) {
+          setState(() => _isSubmitting = false);
+        }
       }
     }
   }
 
   @override
-  void dispose() {
-    emailController.dispose();
-    itemsController.dispose();
-    super.dispose();
-  }
+  Widget build(BuildContext context) {
+    final canRegister = widget.user.canRegisterDonation;
 
-  Widget buildDonationForm() {
-    return Form(
-      key: _formKey,
-      child: Column(
-        children: [
-          TextFormField(
-            controller: emailController,
-            decoration: const InputDecoration(
-              hintText: 'Email do doador',
-              prefixIcon: Icon(Icons.email, color: Color(0xFF3CB371)),
-              border: OutlineInputBorder(),
+    if (!canRegister) {
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('Acesso Negado'),
+          backgroundColor: const Color(0xFF3CB371),
+        ),
+        body: const Center(
+          child: Padding(
+            padding: EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.block, size: 64, color: Colors.red),
+                SizedBox(height: 16),
+                Text(
+                  'Você não tem permissão para registrar doações.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 18),
+                ),
+                SizedBox(height: 8),
+                Text(
+                  'Apenas Doadores e Administradores podem registrar doações.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.grey),
+                ),
+              ],
             ),
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Informe o email do doador';
-              }
-              if (!value.contains('@')) {
-                return 'Email invalido';
-              }
-              return null;
-            },
           ),
-          const SizedBox(height: 16),
-          TextFormField(
-            controller: itemsController,
-            decoration: const InputDecoration(
-              hintText: 'Quantidade de itens',
-              prefixIcon: Icon(Icons.add_box, color: Color(0xFF3CB371)),
-              border: OutlineInputBorder(),
-            ),
-            keyboardType: TextInputType.number,
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Informe a quantidade de itens';
-              }
-              if (int.tryParse(value) == null) {
-                return 'Informe um numero valido';
-              }
-              return null;
-            },
-          ),
-          const SizedBox(height: 24),
-          SizedBox(
-            width: double.infinity,
-            height: 50,
-            child: ElevatedButton(
-              onPressed: registerDonation,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF3CB371),
+        ),
+      );
+    }
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Registrar Doação'),
+        backgroundColor: const Color(0xFF3CB371),
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16.0),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildCollectionPointSelector(),
+              const SizedBox(height: 24),
+              if (_selectedPoint != null) ...[
+                _buildItemSelector(),
+                const SizedBox(height: 24),
+                _buildSubmitButton(),
+              ],
+              const SizedBox(height: 32),
+              const Divider(),
+              const SizedBox(height: 16),
+              const Text(
+                'Histórico de Doações',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
-              child: const Text(
-                'Registrar Doacao',
-                style: TextStyle(fontSize: 18, color: Colors.white),
-              ),
-            ),
+              const SizedBox(height: 16),
+              _buildDonationHistory(),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
 
-  Widget buildUserDonations() {
-    return StreamBuilder(
+  Widget _buildCollectionPointSelector() {
+    return Consumer<MapViewModel>(
+      builder: (context, mapViewModel, child) {
+        final activePoints = mapViewModel.points.where((p) => p.isActive).toList();
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Ponto de Coleta',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 8),
+            if (activePoints.isEmpty)
+              const Card(
+                child: Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: Text(
+                    'Nenhum ponto de coleta ativo disponível no momento.',
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                ),
+              )
+            else
+              DropdownButtonFormField<CollectionPoint>(
+                value: _selectedPoint,
+                decoration: InputDecoration(
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  prefixIcon: const Icon(Icons.location_on, color: Color(0xFF3CB371)),
+                ),
+                hint: const Text('Selecione o ponto de coleta'),
+                items: activePoints.map((point) {
+                  return DropdownMenuItem(
+                    value: point,
+                    child: Text(
+                      '${point.name} - ${point.address}',
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  );
+                }).toList(),
+                onChanged: (value) {
+                  setState(() {
+                    _selectedPoint = value;
+                    _selectedItems.clear(); // Limpa itens ao trocar de ponto
+                  });
+                },
+                validator: (value) {
+                  if (value == null) {
+                    return 'Selecione um ponto de coleta';
+                  }
+                  return null;
+                },
+              ),
+            if (_selectedPoint != null) ...[
+              const SizedBox(height: 12),
+              Card(
+                color: const Color(0xFF00897B).withOpacity(0.1),
+                child: Padding(
+                  padding: const EdgeInsets.all(12.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Itens aceitos neste ponto:',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 6,
+                        children: _selectedPoint!.acceptedItems.map((item) {
+                          return Chip(
+                            label: Text(
+                              item,
+                              style: const TextStyle(fontSize: 12),
+                            ),
+                            backgroundColor: const Color(0xFF00897B).withOpacity(0.2),
+                            padding: const EdgeInsets.symmetric(horizontal: 4),
+                          );
+                        }).toList(),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildItemSelector() {
+    return ItemQuantitySelector(
+      availableItems: _selectedPoint!.acceptedItems,
+      selectedItems: _selectedItems,
+      onItemsChanged: (items) {
+        setState(() {
+          _selectedItems.clear();
+          _selectedItems.addAll(items);
+        });
+      },
+    );
+  }
+
+  Widget _buildSubmitButton() {
+    return SizedBox(
+      width: double.infinity,
+      height: 50,
+      child: ElevatedButton.icon(
+        onPressed: _isSubmitting ? null : registerDonation,
+        icon: _isSubmitting
+            ? const SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.white,
+                ),
+              )
+            : const Icon(Icons.check_circle, color: Colors.white),
+        label: Text(
+          _isSubmitting ? 'Registrando...' : 'Registrar Doação',
+          style: const TextStyle(fontSize: 18, color: Colors.white),
+        ),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFF3CB371),
+          disabledBackgroundColor: Colors.grey,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDonationHistory() {
+    return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
           .collection('activities')
           .where('userId', isEqualTo: widget.user.uid)
@@ -129,69 +327,149 @@ class _DonationPageState extends State<DonationPage> {
           .snapshots(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        }
-
-        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
           return const Center(
-            child: Text(
-              'Nenhuma doacao encontrada.',
-              style: TextStyle(fontSize: 16),
+            child: Padding(
+              padding: EdgeInsets.all(32.0),
+              child: CircularProgressIndicator(),
             ),
           );
         }
 
-        final docs = snapshot.data!.docs;
-
-        return ListView.builder(
-          itemCount: docs.length,
-          itemBuilder: (context, index) {
-            final d = docs[index].data();
-
-            return Card(
-              margin: const EdgeInsets.symmetric(vertical: 8),
-              child: ListTile(
-                title: Text(d['description'] ?? 'Sem descricao'),
-                subtitle: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          return const Card(
+            child: Padding(
+              padding: EdgeInsets.all(24.0),
+              child: Center(
+                child: Column(
                   children: [
-                    Text("Local: ${d['location']}"),
-                    Text("Pontos ganhos: ${d['points']}"),
-                    Text("Data: ${d['timestamp'].toDate()}"),
+                    Icon(Icons.inbox, size: 48, color: Colors.grey),
+                    SizedBox(height: 8),
+                    Text(
+                      'Nenhuma doação registrada ainda.',
+                      style: TextStyle(fontSize: 16, color: Colors.grey),
+                    ),
                   ],
                 ),
               ),
+            ),
+          );
+        }
+
+        // Converter e ordenar em memória
+        final activities = snapshot.data!.docs
+            .map((doc) => Activity.fromFirestore(doc))
+            .toList();
+        activities.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+
+        return Column(
+          children: activities.map((activity) {
+
+            return Card(
+              margin: const EdgeInsets.only(bottom: 12),
+              elevation: 2,
+              child: ExpansionTile(
+                leading: CircleAvatar(
+                  backgroundColor: const Color(0xFF3CB371),
+                  child: Text(
+                    activity.totalItems.toString(),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                title: Text(
+                  activity.collectionPointName ?? activity.location,
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
+                subtitle: Text(
+                  '${activity.totalItems} ${activity.totalItems == 1 ? 'item' : 'itens'} • ${activity.points} pontos',
+                ),
+                trailing: Text(
+                  _formatDate(activity.timestamp),
+                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                ),
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (activity.itemDetails != null &&
+                            activity.itemDetails!.isNotEmpty) ...[
+                          const Text(
+                            'Detalhes da doação:',
+                            style: TextStyle(fontWeight: FontWeight.w600),
+                          ),
+                          const SizedBox(height: 8),
+                          ...activity.itemDetails!.entries.map((entry) {
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 4),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text('• ${entry.key}'),
+                                  Text(
+                                    '${entry.value}x',
+                                    style: const TextStyle(fontWeight: FontWeight.w600),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }).toList(),
+                          const Divider(height: 24),
+                        ],
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text('Local:'),
+                            Flexible(
+                              child: Text(
+                                activity.location,
+                                textAlign: TextAlign.right,
+                                style: const TextStyle(fontWeight: FontWeight.w500),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text('Pontos ganhos:'),
+                            Text(
+                              '+${activity.points}',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF3CB371),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             );
-          },
+          }).toList(),
         );
       },
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final isVolunteer = widget.user.accessProfile == 'volunteer';
-    final isDonor = widget.user.accessProfile == 'donor';
+  String _formatDate(DateTime date) {
+    final now = DateTime.now();
+    final difference = now.difference(date);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Doacoes'),
-        backgroundColor: const Color(0xFF3CB371),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: isVolunteer
-            ? buildDonationForm()
-            : isDonor
-                ? buildUserDonations()
-                : const Center(
-                    child: Text(
-                      'Perfil nao autorizado.',
-                      style:
-                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-      ),
-    );
+    if (difference.inDays == 0) {
+      return 'Hoje';
+    } else if (difference.inDays == 1) {
+      return 'Ontem';
+    } else if (difference.inDays < 7) {
+      return '${difference.inDays} dias atrás';
+    } else {
+      return '${date.day}/${date.month}/${date.year}';
+    }
   }
 }

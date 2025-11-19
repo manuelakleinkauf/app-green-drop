@@ -44,6 +44,14 @@ class _ProfilePageState extends State<ProfilePage> {
           }
 
           final user = vm.user!;
+          
+          // Debug: Verificar valores do usuário
+          print("=== DEBUG PROFILE PAGE ===");
+          print("User Name: ${user.name}");
+          print("User UID: ${user.uid}");
+          print("User AccessProfile: '${user.accessProfile}'");
+          print("User Role: ${user.role}");
+          print("Can View Management: ${user.canViewCollectionPointManagement}");
 
           return SingleChildScrollView(
             child: Padding(
@@ -65,7 +73,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      if (user.accessProfile == 'volunteer')
+                      if (user.canViewCollectionPointManagement)
                         Expanded(
                           child: Padding(
                             padding:

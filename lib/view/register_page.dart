@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
 import '../viewmodel/auth_viewmodel.dart';
+import '../model/user_role.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -17,7 +18,7 @@ class _RegisterPageState extends State<RegisterPage> {
   final TextEditingController passwordController = TextEditingController();
   bool obscurePassword = true;
 
-  String accessProfile = 'donor';
+  UserRole selectedRole = UserRole.doador;
 
   void register() {
     if (_formKey.currentState!.validate()) {
@@ -28,11 +29,11 @@ class _RegisterPageState extends State<RegisterPage> {
       final authViewModel = Provider.of<AuthViewModel>(context, listen: false);
 
       authViewModel
-          .register(email, password, name, accessProfile, context)
+          .register(email, password, name, null, context, role: selectedRole)
           .then((_) {
             _formKey.currentState!.reset();
             setState(() {
-              accessProfile = 'donor';
+              selectedRole = UserRole.doador;
             });
             Navigator.pop(context);
           });
@@ -182,35 +183,23 @@ class _RegisterPageState extends State<RegisterPage> {
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                          ListTile(
-                            title: const Text('Doador'),
-                            leading: Radio<String>(
-                              value: 'donor',
-                              groupValue: accessProfile,
-                              activeColor: const Color(0xFF3CB371),
-                              onChanged: (value) {
-                                setState(() {
-                                  accessProfile = value!;
-                                });
-                              },
-                            ),
-                          ),
-                          ListTile(
-                            title: const Text('Voluntário'),
-                            leading: Radio<String>(
-                              value: 'volunteer',
-                              groupValue: accessProfile,
-                              activeColor: const Color(0xFF3CB371),
-                              onChanged: (value) {
-                                setState(() {
-                                  accessProfile = value!;
-                                });
-                              },
-                            ),
-                          ),
+                          const SizedBox(height: 8),
+                          ...UserRole.values.map((role) => RadioListTile<UserRole>(
+                            title: Text(role.displayName),
+                            subtitle: Text(_getRoleDescription(role)),
+                            value: role,
+                            groupValue: selectedRole,
+                            activeColor: const Color(0xFF3CB371),
+                            onChanged: (value) {
+                              setState(() {
+                                selectedRole = value!;
+                              });
+                            },
+                          )),
                         ],
                       ),
 
+                      const SizedBox(height: 16),
                       SizedBox(
                         width: double.infinity,
                         height: 50,
@@ -244,5 +233,16 @@ class _RegisterPageState extends State<RegisterPage> {
         ],
       ),
     );
+  }
+
+  String _getRoleDescription(UserRole role) {
+    switch (role) {
+      case UserRole.doador:
+        return 'Pode doar e ver histórico de doações';
+      case UserRole.voluntario:
+        return 'Pode gerenciar pontos de coleta';
+      case UserRole.admin:
+        return 'Acesso completo ao sistema';
+    }
   }
 }

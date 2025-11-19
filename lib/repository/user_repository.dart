@@ -1,4 +1,5 @@
 import 'package:app/model/user.dart';
+import 'package:app/model/user_role.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class UserRepository {
@@ -49,6 +50,22 @@ class UserRepository {
 
       await firestore.collection('users').doc(docId).update({
         'points': newPoints,
+      });
+    }
+  }
+
+  Future<void> updateUserRole(String uid, UserRole role) async {
+    final userRef = await firestore
+        .collection('users')
+        .where('uid', isEqualTo: uid)
+        .limit(1)
+        .get();
+
+    if (userRef.docs.isNotEmpty) {
+      final docId = userRef.docs.first.id;
+      await firestore.collection('users').doc(docId).update({
+        'role': role.value,
+        'accessProfile': role.value,
       });
     }
   }

@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../model/user_role.dart';
 
 class AuthRepository {
   final FirebaseAuth _auth;
@@ -19,7 +20,8 @@ class AuthRepository {
     required String email,
     required String password,
     required String name,
-    required String accessProfile,
+    String? accessProfile,
+    UserRole? role,
   }) async {
     try {
       UserCredential userCredential = await _auth
@@ -30,12 +32,16 @@ class AuthRepository {
       print('_firestore: $_firestore');
       print('user.uid: ${user?.uid}');
 
+      final userRole = role ?? UserRole.fromString(accessProfile ?? UserRole.doador.value);
+
       if (user != null) {
         await _firestore.collection('users').doc(user.uid).set({
           'uid': user.uid,
           'name': name,
           'email': email,
-          'accessProfile': accessProfile,
+          'accessProfile': userRole.value,
+          'role': userRole.value,
+          'points': 0,
         });
       }
 
