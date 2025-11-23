@@ -1,0 +1,733 @@
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../model/activity.dart';
+import '../viewmodel/profile_viewmodel.dart';
+import 'ranking_page.dart';
+import 'collection_point_management_page.dart';
+import 'rewards_page.dart';
+
+class ProfilePage extends StatefulWidget {
+  final String uid;
+  const ProfilePage({super.key, required this.uid});
+
+  @override
+  State<ProfilePage> createState() => _ProfilePageState();
+
+}
+
+class _ProfilePageState extends State<ProfilePage> {
+
+class _ProfilePageState extends State<ProfilePage> {  @override
+
+  @override  void initState() {
+
+  void initState() {    super.initState();
+
+    super.initState();    WidgetsBinding.instance.addPostFrameCallback((_) {
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {      final profileVM = Provider.of<ProfileViewModel>(context, listen: false);
+
+      final profileVM = Provider.of<ProfileViewModel>(context, listen: false);      profileVM.loadUser(widget.uid);
+
+      profileVM.loadUser(widget.uid);    });
+
+    });  }
+
+  }
+
+  @override
+
+  @override  Widget build(BuildContext context) {
+
+  Widget build(BuildContext context) {    return Scaffold(
+
+    return Scaffold(      backgroundColor: const Color(0xFFF5F5F5),
+
+      backgroundColor: const Color(0xFFF5F5F5),      appBar: AppBar(
+
+      appBar: AppBar(        title: const Text('Perfil'),
+
+        title: const Text('Perfil'),        backgroundColor: const Color(0xFF00897B),
+
+        backgroundColor: const Color(0xFF00897B),        elevation: 0,
+
+        elevation: 0,      ),
+
+      ),      body: Consumer<ProfileViewModel>(
+
+      body: Consumer<ProfileViewModel>(        builder: (context, vm, _) {
+
+        builder: (context, vm, _) {          if (vm.isLoading) {
+
+          if (vm.isLoading) {            return const Center(child: CircularProgressIndicator());
+
+            return const Center(child: CircularProgressIndicator());          }
+
+          }
+
+          if (vm.user == null) {
+
+          if (vm.user == null) {            return const Center(child: Text('Usuário não encontrado'));
+
+            return const Center(child: Text('Usuário não encontrado'));          }
+
+          }
+
+          final user = vm.user!;
+
+          final user = vm.user!;
+
+          return SingleChildScrollView(
+
+          return SingleChildScrollView(            child: Padding(
+
+            child: Padding(              padding: const EdgeInsets.all(16.0),
+
+              padding: const EdgeInsets.all(16.0),              child: Column(
+
+              child: Column(                children: [
+
+                children: [                  // Nome
+
+                  // Nome                  const SizedBox(height: 12),
+
+                  const SizedBox(height: 12),                  Text(
+
+                  Text(                    '@${user.name}',
+
+                    '@${user.name}',                    style: const TextStyle(
+
+                    style: const TextStyle(                      fontSize: 20,
+
+                      fontSize: 20,                      fontWeight: FontWeight.bold,
+
+                      fontWeight: FontWeight.bold,                    ),
+
+                    ),                  ),
+
+                  ),                  const SizedBox(height: 8),
+
+                  const SizedBox(height: 8),                  Row(
+
+                                      mainAxisAlignment: MainAxisAlignment.center,
+
+                  // Botões de ação                    children: [
+
+                  Row(                      if (user.accessProfile == 'Voluntário')
+
+                    mainAxisAlignment: MainAxisAlignment.center,                        Expanded(
+
+                    children: [                          child: Padding(
+
+                      if (user.accessProfile == 'Voluntário')                            padding: const EdgeInsets.only(bottom: 16, right: 8),
+
+                        Expanded(                            child: ElevatedButton.icon(
+
+                          child: Padding(                              onPressed: () {
+
+                            padding: const EdgeInsets.only(bottom: 16, right: 8),                                Navigator.push(
+
+                            child: ElevatedButton.icon(                                  context,
+
+                              onPressed: () {                                  MaterialPageRoute(
+
+                                Navigator.push(                                    builder: (context) => const CollectionPointManagementPage(),
+
+                                  context,                                  ),
+
+                                  MaterialPageRoute(                                );
+
+                                    builder: (context) => const CollectionPointManagementPage(),                              },
+
+                                  ),                              icon: const Icon(Icons.location_on),
+
+                                );                              label: const Text('Gerenciar Pontos'),
+
+                              },                              style: ElevatedButton.styleFrom(
+
+                              icon: const Icon(Icons.location_on),                                backgroundColor: const Color(0xFF00897B),
+
+                              label: const Text('Gerenciar Pontos'),                                foregroundColor: Colors.white,
+
+                              style: ElevatedButton.styleFrom(                              ),
+
+                                backgroundColor: const Color(0xFF00897B),                            ),
+
+                                foregroundColor: Colors.white,                          ),
+
+                              ),                        ),
+
+                            ),                      Expanded(
+
+                          ),                        child: Padding(
+
+                        ),                          padding: const EdgeInsets.only(bottom: 16, left: 8),
+
+                      Expanded(                          child: ElevatedButton.icon(
+
+                        child: Padding(                            onPressed: () {
+
+                          padding: const EdgeInsets.only(bottom: 16, left: 8),                              Navigator.push(
+
+                          child: ElevatedButton.icon(                                context,
+
+                            onPressed: () {                                MaterialPageRoute(
+
+                              Navigator.push(                                  builder: (context) => RewardsPage(userId: user.uid),
+
+                                context,                                ),
+
+                                MaterialPageRoute(                              );
+
+                                  builder: (context) => RewardsPage(userId: user.uid),                            },
+
+                                ),                            icon: const Icon(Icons.card_giftcard),
+
+                              );                            label: const Text('Recompensas'),
+
+                            },                            style: ElevatedButton.styleFrom(
+
+                            icon: const Icon(Icons.card_giftcard),                              backgroundColor: const Color(0xFF00897B),
+
+                            label: const Text('Recompensas'),                              foregroundColor: Colors.white,
+
+                            style: ElevatedButton.styleFrom(                            ),
+
+                              backgroundColor: const Color(0xFF00897B),                          ),
+
+                              foregroundColor: Colors.white,                        ),
+
+                            ),                      ),
+
+                          ),                    ],
+
+                        ),                  ),
+
+                      ),
+
+                    ],                  Container(
+
+                  ),                    margin: const EdgeInsets.symmetric(vertical: 12),
+
+                    padding: const EdgeInsets.symmetric(
+
+                  // Card de informações                      horizontal: 20,
+
+                  Container(                      vertical: 16,
+
+                    margin: const EdgeInsets.symmetric(vertical: 12),                    ),
+
+                    padding: const EdgeInsets.symmetric(                    decoration: BoxDecoration(
+
+                      horizontal: 20,                      gradient: const LinearGradient(
+
+                      vertical: 16,                        colors: [Color(0xFF00ACC1), Color(0xFF26C6DA)],
+
+                    ),                        begin: Alignment.topLeft,
+
+                    decoration: BoxDecoration(                        end: Alignment.bottomRight,
+
+                      gradient: const LinearGradient(                      ),
+
+                        colors: [Color(0xFF00ACC1), Color(0xFF26C6DA)],                      borderRadius: BorderRadius.circular(20),
+
+                        begin: Alignment.topLeft,                      boxShadow: [
+
+                        end: Alignment.bottomRight,                        BoxShadow(
+
+                      ),                          color: Colors.black.withOpacity(0.1),
+
+                      borderRadius: BorderRadius.circular(20),                          blurRadius: 5,
+
+                      boxShadow: [                          offset: const Offset(0, 3),
+
+                        BoxShadow(                        ),
+
+                          color: Colors.black.withOpacity(0.1),                      ],
+
+                          blurRadius: 5,                    ),
+
+                          offset: const Offset(0, 3),                    child: Row(
+
+                        ),                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+
+                      ],                      children: [
+
+                    ),                        Column(
+
+                    child: Row(                          crossAxisAlignment: CrossAxisAlignment.start,
+
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,                          children: [
+
+                      children: [                            Text(
+
+                        Column(                              user.accessProfile,
+
+                          crossAxisAlignment: CrossAxisAlignment.start,                              style: const TextStyle(
+
+                          children: [                                color: Colors.white,
+
+                            Text(                                fontSize: 18,
+
+                              user.accessProfile,                                fontWeight: FontWeight.bold,
+
+                              style: const TextStyle(                              ),
+
+                                color: Colors.white,                            ),
+
+                                fontSize: 18,                            const SizedBox(height: 4),
+
+                                fontWeight: FontWeight.bold,                            Text(
+
+                              ),                              '${user.points} pontos',
+
+                            ),                              style: const TextStyle(
+
+                            const SizedBox(height: 4),                                color: Colors.white70,
+
+                            Text(                                fontSize: 16,
+
+                              '${user.points} pontos',                              ),
+
+                              style: const TextStyle(                            ),
+
+                                color: Colors.white70,                          ],
+
+                                fontSize: 16,                        ),
+
+                              ),                        const Icon(
+
+                            ),                          Icons.diamond_rounded,
+
+                          ],                          color: Colors.white,
+
+                        ),                          size: 40,
+
+                        const Icon(                        ),
+
+                          Icons.diamond_rounded,                      ],
+
+                          color: Colors.white,                    ),
+
+                          size: 40,                  ),
+
+                        ),
+
+                      ],                  // Estatísticas e Ranking
+
+                    ),                  Padding(
+
+                  ),                    padding: const EdgeInsets.symmetric(vertical: 12.0),
+
+                    child: Column(
+
+                  // Ranking                      crossAxisAlignment: CrossAxisAlignment.start,
+
+                  Padding(                      children: [
+
+                    padding: const EdgeInsets.symmetric(vertical: 12.0),                        const Text(
+
+                    child: Column(                          'Ranking',
+
+                      crossAxisAlignment: CrossAxisAlignment.start,                          style: TextStyle(
+
+                      children: [                            fontSize: 18,
+
+                        const Text(                            fontWeight: FontWeight.bold,
+
+                          'Ranking',                          ),
+
+                          style: TextStyle(                        ),
+
+                            fontSize: 18,                        const SizedBox(height: 10),
+
+                            fontWeight: FontWeight.bold,                        Container(
+
+                          ),                          padding: const EdgeInsets.all(16),
+
+                        ),                          decoration: BoxDecoration(
+
+                        const SizedBox(height: 10),                            color: Colors.white,
+
+                        Container(                            borderRadius: BorderRadius.circular(12),
+
+                          padding: const EdgeInsets.all(16),                            boxShadow: [
+
+                          decoration: BoxDecoration(                              BoxShadow(
+
+                            color: Colors.white,                                color: Colors.black.withOpacity(0.05),
+
+                            borderRadius: BorderRadius.circular(12),                                blurRadius: 5,
+
+                            boxShadow: [                                offset: const Offset(0, 2),
+
+                              BoxShadow(                              ),
+
+                                color: Colors.black.withOpacity(0.05),                            ],
+
+                                blurRadius: 5,                          ),
+
+                                offset: const Offset(0, 2),                          child: Column(
+
+                              ),                            children: [
+
+                            ],                              Row(
+
+                          ),                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+
+                          child: Column(                                children: [
+
+                            children: [                                  Text(
+
+                              Row(                                    'Sua Posição: ${vm.userRanking}º lugar',
+
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,                                    style: const TextStyle(
+
+                                children: [                                      fontSize: 16,
+
+                                  Text(                                      fontWeight: FontWeight.bold,
+
+                                    'Sua Posição: ${vm.userRanking}º lugar',                                    ),
+
+                                    style: const TextStyle(                                  ),
+
+                                      fontSize: 16,                                  Text(
+
+                                      fontWeight: FontWeight.bold,                                    '${user.points} pontos',
+
+                                    ),                                    style: const TextStyle(
+
+                                  ),                                      fontSize: 16,
+
+                                  Text(                                      color: Colors.green,
+
+                                    '${user.points} pontos',                                      fontWeight: FontWeight.bold,
+
+                                    style: const TextStyle(                                    ),
+
+                                      fontSize: 16,                                  ),
+
+                                      color: Colors.green,                                ],
+
+                                      fontWeight: FontWeight.bold,                              ),
+
+                                    ),                              const SizedBox(height: 16),
+
+                                  ),                              const Text(
+
+                                ],                                'Top 3 Usuários',
+
+                              ),                                style: TextStyle(
+
+                              const SizedBox(height: 16),                                  fontSize: 16,
+
+                              const Text(                                  fontWeight: FontWeight.bold,
+
+                                'Top 3 Usuários',                                ),
+
+                                style: TextStyle(                              ),
+
+                                  fontSize: 16,                              const SizedBox(height: 8),
+
+                                  fontWeight: FontWeight.bold,                              for (var i = 0; i < vm.topUsers.length && i < 3; i++) {
+
+                                ),                                final topUser = vm.topUsers[i];
+
+                              ),                                final index = vm.topUsers.indexOf(topUser);
+
+                              const SizedBox(height: 8),                                return Padding(
+
+                              ListView.builder(                                  padding: const EdgeInsets.symmetric(vertical: 4),
+
+                                shrinkWrap: true,                                  child: Row(
+
+                                physics: const NeverScrollableScrollPhysics(),                                    children: [
+
+                                itemCount: vm.topUsers.length > 3 ? 3 : vm.topUsers.length,                                      Text(
+
+                                itemBuilder: (context, index) {                                        '${index + 1}º',
+
+                                  final topUser = vm.topUsers[index];                                        style: const TextStyle(
+
+                                  return Padding(                                          fontWeight: FontWeight.bold,
+
+                                    padding: const EdgeInsets.symmetric(vertical: 4),                                        ),
+
+                                    child: Row(                                      ),
+
+                                      children: [                                      const SizedBox(width: 8),
+
+                                        Text(                                      Text(topUser.name),
+
+                                          '${index + 1}º',                                      const Spacer(),
+
+                                          style: const TextStyle(                                      Text(
+
+                                            fontWeight: FontWeight.bold,                                        '${topUser.points} pts',
+
+                                          ),                                        style: const TextStyle(
+
+                                        ),                                          color: Colors.green,
+
+                                        const SizedBox(width: 8),                                        ),
+
+                                        Text(topUser.name),                                      ),
+
+                                        const Spacer(),                                    ],
+
+                                        Text(                                  ),
+
+                                          '${topUser.points} pts',                                );
+
+                                          style: const TextStyle(                              ),
+
+                                            color: Colors.green,                              const SizedBox(height: 16),
+
+                                          ),                              TextButton(
+
+                                        ),                                onPressed: () {
+
+                                      ],                                  Navigator.push(
+
+                                    ),                                    context,
+
+                                  );                                    MaterialPageRoute(
+
+                                },                                      builder: (context) => const RankingPage(),
+
+                              ),                                    ),
+
+                              const SizedBox(height: 16),                                  );
+
+                              TextButton(                                },
+
+                                onPressed: () {                                child: const Text(
+
+                                  Navigator.push(                                  'Ver Ranking Completo',
+
+                                    context,                                  style: TextStyle(
+
+                                    MaterialPageRoute(                                    color: Color(0xFF00897B),
+
+                                      builder: (context) => const RankingPage(),                                    fontWeight: FontWeight.bold,
+
+                                    ),                                  ),
+
+                                  );                                ),
+
+                                },                              ),
+
+                                child: const Text(                            ],
+
+                                  'Ver Ranking Completo',                          ),
+
+                                  style: TextStyle(                        ),
+
+                                    color: Color(0xFF00897B),                      ],
+
+                                    fontWeight: FontWeight.bold,                    ),
+
+                                  ),                  ),
+
+                                ),
+
+                              ),                  const SizedBox(height: 20),
+
+                            ],
+
+                          ),                  // Atividades recentes
+
+                        ),                  Align(
+
+                      ],                    alignment: Alignment.centerLeft,
+
+                    ),                    child: const Text(
+
+                  ),                      'Atividades recentes',
+
+                      style: TextStyle(
+
+                  // Atividades recentes                        fontSize: 18,
+
+                  const Align(                        fontWeight: FontWeight.bold,
+
+                    alignment: Alignment.centerLeft,                      ),
+
+                    child: Text(                    ),
+
+                      'Atividades recentes',                  ),
+
+                      style: TextStyle(                  const SizedBox(height: 12),
+
+                        fontSize: 18,
+
+                        fontWeight: FontWeight.bold,                  if (vm.recentActivities.isEmpty)
+
+                      ),                    const Center(
+
+                    ),                      child: Text(
+
+                  ),                        'Nenhuma atividade recente',
+
+                  const SizedBox(height: 12),                        style: TextStyle(
+
+                          fontSize: 16,
+
+                  if (vm.recentActivities.isEmpty)                          color: Colors.grey,
+
+                    const Center(                        ),
+
+                      child: Text(                      ),
+
+                        'Nenhuma atividade recente',                    )
+
+                        style: TextStyle(                  else
+
+                          fontSize: 16,                    Column(
+
+                          color: Colors.grey,                      children: vm.recentActivities.map((activity) {
+
+                        ),                        return Column(
+
+                      ),                          children: [
+
+                    )                            _buildActivityCard(
+
+                  else                              imageUrl: null,
+
+                    ListView.builder(                              text: activity.description,
+
+                      shrinkWrap: true,                              location: activity.location,
+
+                      physics: const NeverScrollableScrollPhysics(),                              points: activity.points,
+
+                      itemCount: vm.recentActivities.length,                              userPoints: user.points,
+
+                      itemBuilder: (context, index) {                            ),
+
+                        final activity = vm.recentActivities[index];                            const SizedBox(height: 10),
+
+                        return Padding(                          ],
+
+                          padding: const EdgeInsets.only(bottom: 10),                        );
+
+                          child: _buildActivityCard(                      }).toList(),
+
+                            imageUrl: null,                    ),
+
+                            text: activity.description,                ],
+
+                            location: activity.location,              ),
+
+                            points: activity.points,            ),
+
+                            userPoints: user.points,          );
+
+                          ),        },
+
+                        );      ),
+
+                      },    );
+
+                    ),  }
+
+                ],
+
+              ),  Widget _buildActivityCard({
+
+            ),    required String? imageUrl,
+
+          );    required String text,
+
+        },    required String location,
+
+      ),    required int points,
+
+    );    required int userPoints,
+
+  }  }) {
+
+    return Container(
+
+  Widget _buildActivityCard({      padding: const EdgeInsets.all(12),
+
+    required String? imageUrl,      decoration: BoxDecoration(
+
+    required String text,        color: const Color(0xFFE0F7FA),
+
+    required String location,        borderRadius: BorderRadius.circular(16),
+
+    required int points,      ),
+
+    required int userPoints,      child: Row(
+
+  }) {        children: [
+
+    return Container(          CircleAvatar(
+
+      padding: const EdgeInsets.all(12),            radius: 22,
+
+      decoration: BoxDecoration(            backgroundImage: imageUrl != null
+
+        color: const Color(0xFFE0F7FA),                ? NetworkImage(imageUrl)
+
+        borderRadius: BorderRadius.circular(16),                : const AssetImage('assets/images/default_avatar.png')
+
+      ),                      as ImageProvider,
+
+      child: Row(          ),
+
+        children: [          const SizedBox(width: 12),
+
+          CircleAvatar(          Expanded(
+
+            radius: 22,            child: Column(
+
+            backgroundImage: imageUrl != null              crossAxisAlignment: CrossAxisAlignment.start,
+
+                ? NetworkImage(imageUrl)              children: [
+
+                : const AssetImage('assets/images/default_avatar.png')                Text(text, style: const TextStyle(fontSize: 14)),
+
+                    as ImageProvider,                const SizedBox(height: 4),
+
+          ),                Text(
+
+          const SizedBox(width: 12),                  'Local: $location  •  Pontos: +$points',
+
+          Expanded(                  style: const TextStyle(fontSize: 12, color: Colors.black54),
+
+            child: Column(                ),
+
+              crossAxisAlignment: CrossAxisAlignment.start,                Text(
+
+              children: [                  '$userPoints pontos',
+
+                Text(text, style: const TextStyle(fontSize: 14)),                  style: const TextStyle(color: Colors.black87, fontSize: 14),
+
+                const SizedBox(height: 4),                ),
+
+                Text(              ],
+
+                  'Local: $location  •  Pontos: +$points',            ),
+
+                  style: const TextStyle(fontSize: 12, color: Colors.black54),          ),
+
+                ),        ],
+
+                Text(      ),
+
+                  '$userPoints pontos',    );
+
+                  style: const TextStyle(color: Colors.black87, fontSize: 14),  }
+
+                ),}
+
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
