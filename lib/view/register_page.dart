@@ -184,19 +184,21 @@ class _RegisterPageState extends State<RegisterPage> {
                             ),
                           ),
                           const SizedBox(height: 8),
-                          ...UserRole.values.map((role) => RadioListTile<UserRole>(
-                            title: Text(role.displayName),
-                            subtitle: Text(_getRoleDescription(role)),
-                            value: role,
-                            groupValue: selectedRole,
-                            activeColor: const Color(0xFF3CB371),
-                            onChanged: (value) {
-                              setState(() {
-                                selectedRole = value!;
-                              });
-                            },
-                          )),
-                        ],
+                          ...UserRole.values
+                            .where((role) => role != UserRole.admin) 
+                            .map((role) => RadioListTile<UserRole>(
+                              title: Text(role.displayName),
+                              subtitle: Text(_getRoleDescription(role)),
+                              value: role,
+                              groupValue: selectedRole,
+                              activeColor: const Color(0xFF3CB371),
+                              onChanged: (value) {
+                                setState(() {
+                                  selectedRole = value!;
+                                });
+                              },
+                            )),
+                          ],
                       ),
 
                       const SizedBox(height: 16),

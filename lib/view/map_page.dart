@@ -95,19 +95,13 @@ class _MapPageState extends State<MapPage> {
           ),
         ],
       ),
-      floatingActionButton: userProvider.canCreateCollectionPoint
-          ? FloatingActionButton(
-              onPressed: () => _showAddPointDialog(context, viewModel),
-              backgroundColor: const Color(0xFF00897B),
-              child: const Icon(Icons.add),
-            )
-          : null,
     );
   }
 
-  Future<void> _showAddPointDialog(BuildContext context, MapViewModel viewModel) async {
+  Future<void> _showAddPointDialog(
+      BuildContext context, MapViewModel viewModel) async {
     clearForm();
-    
+
     return showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -134,10 +128,12 @@ class _MapPageState extends State<MapPage> {
           ),
           ElevatedButton(
             onPressed: () async {
-              if (_formKey.currentState!.validate() && selectedItems.isNotEmpty) {
+              if (_formKey.currentState!.validate() &&
+                  selectedItems.isNotEmpty) {
                 try {
-                  final currentUserId = FirebaseAuth.instance.currentUser?.uid ?? 'unknown';
-                  
+                  final currentUserId =
+                      FirebaseAuth.instance.currentUser?.uid ?? 'unknown';
+
                   await viewModel.addPoint(
                     nameController.text,
                     getFullAddress(),
@@ -145,10 +141,13 @@ class _MapPageState extends State<MapPage> {
                     List<String>.from(selectedItems),
                     currentUserId,
                   );
-                  
+
                   Navigator.pop(context);
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Ponto de coleta adicionado com sucesso!')),
+                    const SnackBar(
+                      content:
+                          Text('Ponto de coleta adicionado com sucesso!'),
+                    ),
                   );
                 } catch (e) {
                   Navigator.pop(context);
@@ -158,7 +157,9 @@ class _MapPageState extends State<MapPage> {
                 }
               } else if (selectedItems.isEmpty) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Selecione pelo menos um item aceito')),
+                  const SnackBar(
+                    content: Text('Selecione pelo menos um item aceito'),
+                  ),
                 );
               }
             },

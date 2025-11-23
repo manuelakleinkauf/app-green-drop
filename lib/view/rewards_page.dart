@@ -5,14 +5,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../model/reward.dart';
 import '../viewmodel/reward_viewmodel.dart';
 import 'create_reward_page.dart';
-
-import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-
-import '../model/reward.dart';
-import '../viewmodel/reward_viewmodel.dart';
-import 'create_reward_page.dart';
 import 'history_reward_page.dart';
 
 class RewardsPage extends StatelessWidget {
@@ -82,8 +74,8 @@ class RewardsPage extends StatelessWidget {
                 padding: const EdgeInsets.all(16),
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 2,
-                  childAspectRatio: 0.60,
                   crossAxisSpacing: 16,
+                  childAspectRatio: 0.62,
                 ),
                 itemCount: rewards.length,
                 itemBuilder: (context, index) {
@@ -134,14 +126,12 @@ class RewardsPage extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // IMAGEM DO CARTÃO
+          // IMAGEM
           Container(
             height: 120,
             decoration: BoxDecoration(
-              borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(12)),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
               image: reward.imageUrl != null
                   ? DecorationImage(
                       image: NetworkImage(reward.imageUrl!),
@@ -161,63 +151,71 @@ class RewardsPage extends StatelessWidget {
                 : null,
           ),
 
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  reward.title,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    reward.title,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  reward.description,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey,
+
+                  const SizedBox(height: 4),
+
+                  Text(
+                    reward.description,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  '${reward.pointsCost} pontos',
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF00897B),
+
+                  const SizedBox(height: 8),
+
+                  Text(
+                    '${reward.pointsCost} pontos',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF00897B),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 8),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: currentPoints >= reward.pointsCost
-                        ? () => _claimReward(context, reward, viewModel)
-                        : null,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: currentPoints >= reward.pointsCost
-                          ? const Color(0xFF00897B)
-                          : Colors.grey,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
+
+                  const Spacer(),
+
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: currentPoints >= reward.pointsCost
+                          ? () => _claimReward(context, reward, viewModel)
+                          : null,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: currentPoints >= reward.pointsCost
+                            ? const Color(0xFF00897B)
+                            : Colors.grey,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      child: Text(
+                        currentPoints >= reward.pointsCost
+                            ? 'Resgatar'
+                            : 'Pontos insuficientes',
+                        textAlign: TextAlign.center,
                       ),
                     ),
-                    child: Text(
-                      currentPoints >= reward.pointsCost
-                          ? 'Resgatar'
-                          : 'Pontos insuficientes',
-                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ],
