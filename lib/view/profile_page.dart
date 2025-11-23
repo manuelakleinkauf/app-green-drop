@@ -1,3 +1,4 @@
+import 'package:app/view/login_page.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../model/activity.dart';
@@ -5,6 +6,8 @@ import '../viewmodel/profile_viewmodel.dart';
 import 'ranking_page.dart';
 import 'collection_point_management_page.dart';
 import 'rewards_page.dart';
+import '../repository/auth_repository.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class ProfilePage extends StatefulWidget {
   final String uid;
@@ -15,6 +18,7 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
+
   @override
   void initState() {
     super.initState();
@@ -24,6 +28,39 @@ class _ProfilePageState extends State<ProfilePage> {
     });
   }
 
+  Future<void> _logout() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Sair"),
+        content: const Text("Deseja realmente sair da sua conta?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text("Cancelar"),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text("Sair"),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      await FirebaseAuth.instance.signOut();
+
+      if (context.mounted) {
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (_) => LoginPage()),
+          (_) => false,
+        );
+      }
+    }
+  }
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -32,6 +69,13 @@ class _ProfilePageState extends State<ProfilePage> {
         title: const Text('Perfil'),
         backgroundColor: const Color(0xFF00897B),
         elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: _logout,
+            tooltip: "Sair",
+          ),
+        ],
       ),
       body: Consumer<ProfileViewModel>(
         builder: (context, vm, _) {
@@ -44,21 +88,12 @@ class _ProfilePageState extends State<ProfilePage> {
           }
 
           final user = vm.user!;
-          
-          // Debug: Verificar valores do usuário
-          print("=== DEBUG PROFILE PAGE ===");
-          print("User Name: ${user.name}");
-          print("User UID: ${user.uid}");
-          print("User AccessProfile: '${user.accessProfile}'");
-          print("User Role: ${user.role}");
-          print("Can View Management: ${user.canViewCollectionPointManagement}");
 
           return SingleChildScrollView(
             child: Padding(
               padding: const EdgeInsets.all(16.0),
               child: Column(
                 children: [
-                  // Nome
                   const SizedBox(height: 12),
                   Text(
                     '@${user.name}',
@@ -69,22 +104,22 @@ class _ProfilePageState extends State<ProfilePage> {
                   ),
                   const SizedBox(height: 8),
 
-                  // Botões de ação
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      if (user.canViewCollectionPointManagement)
+                      
+                      /// ⬇️ ALTERAÇÃO AQUI
+                      if (user.accessProfile == "Voluntario" ||
+                          user.canViewCollectionPointManagement)
                         Expanded(
                           child: Padding(
-                            padding:
-                                const EdgeInsets.only(bottom: 16, right: 8),
+                            padding: const EdgeInsets.only(bottom: 16, right: 8),
                             child: ElevatedButton.icon(
                               onPressed: () {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) =>
-                                        const CollectionPointManagementPage(),
+                                    builder: (context) => const CollectionPointManagementPage(),
                                   ),
                                 );
                               },
@@ -97,6 +132,7 @@ class _ProfilePageState extends State<ProfilePage> {
                             ),
                           ),
                         ),
+
                       Expanded(
                         child: Padding(
                           padding: const EdgeInsets.only(bottom: 16, left: 8),
@@ -315,6 +351,22 @@ class _ProfilePageState extends State<ProfilePage> {
                             );
                           }).toList(),
                       ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  ElevatedButton.icon(
+                    onPressed: _logout,
+                    icon: const Icon(Icons.logout),
+                    label: const Text("Sair"),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red,
+                      foregroundColor: Colors.white,
+                      minimumSize: const Size(double.infinity, 50),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
                   ),
                 ],

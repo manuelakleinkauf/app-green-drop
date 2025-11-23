@@ -45,7 +45,6 @@ class _DonationPageState extends State<DonationPage> {
         return;
       }
 
-      // Validar se o ponto aceita os itens selecionados
       final invalidItems = _selectedItems.keys
           .where((item) => !_selectedPoint!.acceptedItems.contains(item))
           .toList();
@@ -53,9 +52,7 @@ class _DonationPageState extends State<DonationPage> {
       if (invalidItems.isNotEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              'Este ponto não aceita: ${invalidItems.join(', ')}',
-            ),
+            content: Text('Este ponto não aceita: ${invalidItems.join(', ')}'),
             backgroundColor: Colors.red,
           ),
         );
@@ -65,7 +62,8 @@ class _DonationPageState extends State<DonationPage> {
       setState(() => _isSubmitting = true);
 
       try {
-        final donationVM = Provider.of<DonationViewModel>(context, listen: false);
+        final donationVM =
+            Provider.of<DonationViewModel>(context, listen: false);
 
         await donationVM.registerDonation(
           userId: widget.user.uid,
@@ -83,7 +81,6 @@ class _DonationPageState extends State<DonationPage> {
           ),
         );
 
-        // Limpar formulário
         setState(() {
           _selectedPoint = null;
           _selectedItems.clear();
@@ -143,34 +140,42 @@ class _DonationPageState extends State<DonationPage> {
     }
 
     return Scaffold(
+      resizeToAvoidBottomInset: true, 
       appBar: AppBar(
         title: const Text('Registrar Doação'),
         backgroundColor: const Color(0xFF3CB371),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildCollectionPointSelector(),
-              const SizedBox(height: 24),
-              if (_selectedPoint != null) ...[
-                _buildItemSelector(),
+      body: SafeArea( 
+        child: SingleChildScrollView(
+          padding: EdgeInsets.only(
+            left: 16,
+            right: 16,
+            top: 16,
+            bottom: MediaQuery.of(context).padding.bottom + 20, 
+          ),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildCollectionPointSelector(),
                 const SizedBox(height: 24),
-                _buildSubmitButton(),
+                if (_selectedPoint != null) ...[
+                  _buildItemSelector(),
+                  const SizedBox(height: 24),
+                  _buildSubmitButton(),
+                ],
+                const SizedBox(height: 32),
+                const Divider(),
+                const SizedBox(height: 16),
+                const Text(
+                  'Histórico de Doações',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 16),
+                _buildDonationHistory(),
               ],
-              const SizedBox(height: 32),
-              const Divider(),
-              const SizedBox(height: 16),
-              const Text(
-                'Histórico de Doações',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 16),
-              _buildDonationHistory(),
-            ],
+            ),
           ),
         ),
       ),
@@ -180,7 +185,8 @@ class _DonationPageState extends State<DonationPage> {
   Widget _buildCollectionPointSelector() {
     return Consumer<MapViewModel>(
       builder: (context, mapViewModel, child) {
-        final activePoints = mapViewModel.points.where((p) => p.isActive).toList();
+        final activePoints =
+            mapViewModel.points.where((p) => p.isActive).toList();
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -210,67 +216,33 @@ class _DonationPageState extends State<DonationPage> {
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  prefixIcon: const Icon(Icons.location_on, color: Color(0xFF3CB371)),
+                  prefixIcon:
+                      const Icon(Icons.location_on, color: Color(0xFF3CB371)),
                 ),
                 hint: const Text('Selecione o ponto de coleta'),
+                isExpanded: true,
                 items: activePoints.map((point) {
                   return DropdownMenuItem(
                     value: point,
-                    child: Text(
-                      '${point.name} - ${point.address}',
-                      overflow: TextOverflow.ellipsis,
+                    child: SizedBox(
+                      width: MediaQuery.of(context).size.width * 0.7,
+                      child: Text(
+                        '${point.name} - ${point.address}',
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
+                      ),
                     ),
                   );
                 }).toList(),
                 onChanged: (value) {
                   setState(() {
                     _selectedPoint = value;
-                    _selectedItems.clear(); // Limpa itens ao trocar de ponto
+                    _selectedItems.clear();
                   });
                 },
-                validator: (value) {
-                  if (value == null) {
-                    return 'Selecione um ponto de coleta';
-                  }
-                  return null;
-                },
+                validator: (value) =>
+                    value == null ? 'Selecione um ponto de coleta' : null,
               ),
-            if (_selectedPoint != null) ...[
-              const SizedBox(height: 12),
-              Card(
-                color: const Color(0xFF00897B).withOpacity(0.1),
-                child: Padding(
-                  padding: const EdgeInsets.all(12.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Itens aceitos neste ponto:',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Wrap(
-                        spacing: 6,
-                        runSpacing: 6,
-                        children: _selectedPoint!.acceptedItems.map((item) {
-                          return Chip(
-                            label: Text(
-                              item,
-                              style: const TextStyle(fontSize: 12),
-                            ),
-                            backgroundColor: const Color(0xFF00897B).withOpacity(0.2),
-                            padding: const EdgeInsets.symmetric(horizontal: 4),
-                          );
-                        }).toList(),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
           ],
         );
       },
@@ -355,7 +327,6 @@ class _DonationPageState extends State<DonationPage> {
           );
         }
 
-        // Converter e ordenar em memória
         final activities = snapshot.data!.docs
             .map((doc) => Activity.fromFirestore(doc))
             .toList();
@@ -363,7 +334,6 @@ class _DonationPageState extends State<DonationPage> {
 
         return Column(
           children: activities.map((activity) {
-
             return Card(
               margin: const EdgeInsets.only(bottom: 12),
               elevation: 2,
@@ -404,14 +374,17 @@ class _DonationPageState extends State<DonationPage> {
                           const SizedBox(height: 8),
                           ...activity.itemDetails!.entries.map((entry) {
                             return Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 4),
+                              padding:
+                                  const EdgeInsets.symmetric(vertical: 4),
                               child: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text('• ${entry.key}'),
                                   Text(
                                     '${entry.value}x',
-                                    style: const TextStyle(fontWeight: FontWeight.w600),
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.w600),
                                   ),
                                 ],
                               ),
@@ -420,21 +393,24 @@ class _DonationPageState extends State<DonationPage> {
                           const Divider(height: 24),
                         ],
                         Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          mainAxisAlignment:
+                              MainAxisAlignment.spaceBetween,
                           children: [
                             const Text('Local:'),
                             Flexible(
                               child: Text(
                                 activity.location,
                                 textAlign: TextAlign.right,
-                                style: const TextStyle(fontWeight: FontWeight.w500),
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.w500),
                               ),
                             ),
                           ],
                         ),
                         const SizedBox(height: 8),
                         Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          mainAxisAlignment:
+                              MainAxisAlignment.spaceBetween,
                           children: [
                             const Text('Pontos ganhos:'),
                             Text(
@@ -462,14 +438,10 @@ class _DonationPageState extends State<DonationPage> {
     final now = DateTime.now();
     final difference = now.difference(date);
 
-    if (difference.inDays == 0) {
-      return 'Hoje';
-    } else if (difference.inDays == 1) {
-      return 'Ontem';
-    } else if (difference.inDays < 7) {
-      return '${difference.inDays} dias atrás';
-    } else {
-      return '${date.day}/${date.month}/${date.year}';
-    }
+    if (difference.inDays == 0) return 'Hoje';
+    if (difference.inDays == 1) return 'Ontem';
+    if (difference.inDays < 7) return '${difference.inDays} dias atrás';
+
+    return '${date.day}/${date.month}/${date.year}';
   }
 }
