@@ -9,30 +9,54 @@ class MapViewModel extends ChangeNotifier {
   LatLng _center = LatLng(-23.5505, -46.6333);
   LatLng get center => _center;
 
-  final List<CollectionPoint> _points = [];
-  List<CollectionPoint> get points => _points;
+  // Lista de pontos ativos (para o mapa)
+  final List<CollectionPoint> _activePoints = [];
+  List<CollectionPoint> get points => _activePoints;
+
+  // Lista de todos os pontos (para gestão)
+  final List<CollectionPoint> _allPoints = [];
+  List<CollectionPoint> get allPoints => _allPoints;
+
   bool isLoading = false;
 
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   MapViewModel() {
-    _listenToFirestorePoints();
+    _listenToActivePoints();
+    _listenToAllPoints();
   }
 
-  void _listenToFirestorePoints() {
-    _firestore.collection('collection_points').snapshots().listen((snapshot) {
-      print("Atualizando pontos do Firebase... Total: ${snapshot.docs.length}");
-
-      _points.clear();
+  // Listener para pontos ativos (usado no mapa)
+  void _listenToActivePoints() {
+    _firestore.collection('collection_points')
+        .where('isActive', isEqualTo: true)
+        .snapshots()
+        .listen((snapshot) {
+      _activePoints.clear();
 
       for (var doc in snapshot.docs) {
         final data = doc.data();
         final point = CollectionPoint.fromMap(data, doc.id);
-        _points.add(point);
+        _activePoints.add(point);
       }
 
-      if (_points.isNotEmpty) {
-        _center = LatLng(_points.last.latitude, _points.last.longitude);
+      if (_activePoints.isNotEmpty) {
+        _center = LatLng(_activePoints.last.latitude, _activePoints.last.longitude);
+      }
+
+      notifyListeners();
+    });
+  }
+
+  // Listener para todos os pontos (usado na gestão)
+  void _listenToAllPoints() {
+    _firestore.collection('collection_points').snapshots().listen((snapshot) {
+      _allPoints.clear();
+
+      for (var doc in snapshot.docs) {
+        final data = doc.data();
+        final point = CollectionPoint.fromMap(data, doc.id);
+        _allPoints.add(point);
       }
 
       notifyListeners();
@@ -138,7 +162,7 @@ class MapViewModel extends ChangeNotifier {
       }
 
       // Processar coordenadas e salvar ponto
-      final lat = geocodeResult!['lat'] is String 
+      final lat = geocodeResult['lat'] is String 
           ? double.parse(geocodeResult['lat']) 
           : geocodeResult['lat'].toDouble();
       final lon = geocodeResult['lon'] is String 

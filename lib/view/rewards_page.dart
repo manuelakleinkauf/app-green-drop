@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../model/reward.dart';
 import '../viewmodel/reward_viewmodel.dart';
+import '../viewmodel/current_user_provider.dart';
 import 'create_reward_page.dart';
 import 'history_reward_page.dart';
 
@@ -92,25 +93,24 @@ class RewardsPage extends StatelessWidget {
           );
         },
       ),
-      floatingActionButton: accessProfile == "volunteer"
-          ? FloatingActionButton(
-              backgroundColor: const Color(0xFF00897B),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => CreateRewardPage(
-                      user: {
-                        "accessProfile": accessProfile,
-                        "userId": userId,
-                      },
-                    ),
-                  ),
-                );
-              },
-              child: const Icon(Icons.add),
-            )
-          : null,
+      floatingActionButton: Consumer<CurrentUserProvider>(
+        builder: (context, userProvider, child) {
+          return userProvider.canViewCollectionPointManagement
+              ? FloatingActionButton(
+                  backgroundColor: const Color(0xFF00897B),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const CreateRewardPage(),
+                      ),
+                    );
+                  },
+                  child: const Icon(Icons.add),
+                )
+              : const SizedBox.shrink();
+        },
+      ),
     );
   }
 

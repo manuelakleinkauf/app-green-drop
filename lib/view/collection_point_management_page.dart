@@ -49,12 +49,6 @@ class _CollectionPointManagementPageState extends State<CollectionPointManagemen
   @override
   Widget build(BuildContext context) {
     final userProvider = Provider.of<CurrentUserProvider>(context);
-    
-    // Debug: Imprimir informações do usuário
-    print("=== DEBUG COLLECTION POINT MANAGEMENT ===");
-    print("User UID: ${userProvider.currentUser?.uid}");
-    print("User Role: ${userProvider.currentUser?.role}");
-    print("Can view management: ${userProvider.canViewCollectionPointManagement}");
 
     // Verifica se o usuário tem permissão para acessar esta página
     if (!userProvider.canViewCollectionPointManagement) {
@@ -101,23 +95,20 @@ class _CollectionPointManagementPageState extends State<CollectionPointManagemen
           }
 
           return ListView.builder(
-            itemCount: viewModel.points.length,
+            itemCount: viewModel.allPoints.length,
             itemBuilder: (context, index) {
-              final point = viewModel.points[index];
+              final point = viewModel.allPoints[index];
               final canEdit = userProvider.canEditCollectionPoint(point.createdBy);
-              
-              // Debug: Imprimir informações do ponto
-              print("Ponto ${index + 1}: ${point.name}");
-              print("  - ID: ${point.id}");
-              print("  - CreatedBy: ${point.createdBy}");
-              print("  - Can Edit: $canEdit");
+              // Admins podem sempre desativar/ativar qualquer ponto
+              // Voluntários podem apenas desativar/ativar pontos que criaram
+              final canToggleStatus = userProvider.canEditAnyCollectionPoint || canEdit;
               
               return Card(
                 margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: ExpansionTile(
                   title: Text(point.name),
                   subtitle: Text(point.address),
-                  trailing: canEdit
+                  trailing: canToggleStatus
                       ? Switch(
                           value: point.isActive,
                           onChanged: (value) => _togglePointStatus(viewModel, point),

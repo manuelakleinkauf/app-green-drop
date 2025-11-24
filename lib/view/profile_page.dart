@@ -6,7 +6,6 @@ import '../viewmodel/profile_viewmodel.dart';
 import 'ranking_page.dart';
 import 'collection_point_management_page.dart';
 import 'rewards_page.dart';
-import '../repository/auth_repository.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class ProfilePage extends StatefulWidget {
